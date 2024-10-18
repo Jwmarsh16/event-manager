@@ -20,3 +20,48 @@ class User(db.Model, SerializerMixin):
     received_invitations = db.relationship('GroupInvitation', foreign_keys='GroupInvitation.invited_user_id', back_populates='invitee', cascade="all, delete-orphan")
 
     serialize_rules = ('-password_hash', '-events', '-sent_invitations', '-received_invitations', '-comments', '-rsvps', '-groups')
+
+
+    @validates('username')
+    def validate_username(self, key, username):
+        if not username:
+            raise ValueError("Username is required.")
+        if len(username) < 3 or len(username) > 80:
+            raise ValueError("Username must be between 3 and 80 characters.")
+        if not re.match("^[a-zA-Z0-9_.-]+$", username):
+            raise ValueError("Username must contain only letters, numbers, and underscores.")
+        return username
+
+    @validates('email')
+    def validate_email(self, key, email):
+        if not email:
+            raise ValueError("Email is required.")
+        email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        if not re.match(email_regex, email):
+            raise ValueError("Invalid email address.")
+        return email
+
+    @validates('password_hash')
+    def validate_password(self, key, password_hash):
+        password = self._original_password
+        if len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+        if not re.search(r"[A-Z]", password):
+            raise ValueError("Password must contain at least one uppercase letter.")
+        if not re.search(r"[a-z]", password):
+            raise ValueError("Password must contain at least one lowercase letter.")
+        if not re.search(r"[0-9]", password):
+            raise ValueError("Password must contain at least one digit.")
+        return password_hash
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
+        self._original_password = password
+        self.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
