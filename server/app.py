@@ -112,6 +112,7 @@ class UserList(Resource):
 
         return [user.to_dict() for user in users], 200
 
+# User Profile Resource
 class UserProfile(Resource):
     @jwt_required()
     def get(self, user_id=None):
@@ -140,25 +141,65 @@ class UserProfile(Resource):
             ]
         }, 200
 
-    class DeleteProfile(Resource):
-        @jwt_required()
-        def delete(self):
-            current_user_id = get_jwt_identity()
-            print(f"Attempting to delete user with ID: {current_user_id}")
+class DeleteProfile(Resource):
+    @jwt_required()
+    def delete(self):
+        current_user_id = get_jwt_identity()
+        print(f"Attempting to delete user with ID: {current_user_id}")
 
-            user = User.query.get_or_404(current_user_id)
-            try:
-                db.session.delete(user)
-                db.session.commit()
-                print(f"User with ID {current_user_id} deleted successgully")
-            except Exception as e:
-                print(f"Error occurred during user deletion: {e}")
-                return {"message": "Failed to delete user"}, 500
+        user = User.query.get_or_404(current_user_id)
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            print(f"User with ID {current_user_id} deleted successfully")
+        except Exception as e:
+            print(f"Error occurred during user deletion: {e}")
+            return {"message": "Failed to delete user"}, 500
 
-            response = make_response(jsonify({"nessage": "User deleted successfully"}))
-            unset_jwt_cookies(response)
+        # Return a response message directly, not a `Response` object inside JSON
+        response = make_response(jsonify({"message": "User deleted successfully"}))  # Use jsonify here
+        unset_jwt_cookies(response)  # Unset any JWT-related cookies
 
-            return response
+        return response  # Return the response directly without converting it
+
+# Event Resource for listing and searching events
+class EventList(Resource):
+    def get(self):
+        limit = request.args.get('limit', 30)
+        query = request.args.get('q', '')
+
+        if query:
+            events = Event.query.filter(Event.name.ilike(f"%{query}%")).limit(limit).all()
+        else:
+            events = Event.query.limit(limit).all()
+
+        return [event.to_dict() for event in events], 200
+
+    @jwt_required()
+    def post(self):
+        current_user_id = get_jwt_identity()
+        data = request.get_json()
+
+        if not all(k in data for k in ("name", "date", "location", "description")):
+            return {"message": "Missing required fields"}, 400
+
+        try:
+            event_date = datetime.strptime(data['date'], "%Y-%m-%dT%H:%M")
+        except ValueError:
+            return {"message": "Invalid date format, expected YYYY-MM-DDTHH:MM"}, 400
+
+        new_event = Event(
+            name=data['name'],
+            date=event_date,
+            location=data['location'],
+            description=data['description'],
+            user_id=current_user_id
+        )
+        db.session.add(new_event)
+        db.session.commit()
+        return {"message": "Event created successfully", "event": new_event.to_dict()}, 201  
+
+
 
 
             
