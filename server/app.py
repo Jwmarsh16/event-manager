@@ -199,6 +199,50 @@ class EventList(Resource):
         db.session.commit()
         return {"message": "Event created successfully", "event": new_event.to_dict()}, 201  
 
+class EventDetail(Resource):
+    def get(self, event_id):
+        event = Event.query.get_or_404(event_id)
+        rsvps = RSVP.query.filter_by(event_id=event_id).all()
+        event_data = event.to_dict()
+        event_data['rsvps'] = [
+            {
+                'user_id': rsvp.user.id,
+                'username': rsvp.user.username,
+                'status': rsvp.status
+            }
+            for rsvp in rsvps
+        ]
+        return event_data, 200
+
+    @jwt_required()
+    def put(self, event_id):
+        current_user_id = get_jwt_identity()
+        event = Event.query.get_or_404(event_id)
+
+        if event.user_id != current_user_id:
+            return {"message": "You do not have permission to update this event"}, 403
+
+        data = request.get_json()
+        event.name = data.get('name', event.name)
+        event.date = data.get('date', event.date)
+        event.location = data.get('location', event.location)
+        event.description = data.get('description', event.description)
+
+        db.session.commit()
+        return {"message": "Event updated successfully", "event": event.to_dict()}, 200
+
+    @jwt_required()
+    def delete(self, event_id):
+        current_user_id = str(get_jwt_identity())
+        event = Event.query.get_or_404(event_id)
+
+        if str(event.user_id) != current_user_id:
+            return {"message": "You do not have permission to delete this event"}, 403
+
+        db.session.delete(event)
+        db.session.commit()
+        return {"message": "Event deleted successfully"}, 200
+
 
 
 
