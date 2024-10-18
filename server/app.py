@@ -367,6 +367,30 @@ class AcceptGroupInvitation(Resource):
         db.session.commit()
         return {"message": "Invitation accepted", "invitation": invitation.to_dict()}, 200
 
+# RSVP Resources
+class RSVPList(Resource):
+    @jwt_required()
+    def post(self):
+        current_user_id = get_jwt_identity()
+        data = request.get_json()
+
+        if not all(k in data for k in ("event_id", "status")):
+            return {"message": "Missing required fields"}, 400
+
+        new_rsvp = RSVP(
+            user_id=current_user_id,
+            event_id=data['event_id'],
+            status=data['status']
+        )
+        db.session.add(new_rsvp)
+        db.session.commit()
+        return {"message": "RSVP created successfully", "rsvp": new_rsvp.to_dict()}, 201
+
+class EventRSVPs(Resource):
+    def get(self, event_id):
+        rsvps = RSVP.query.filter_by(event_id=event_id).all()
+        return [rsvp.to_dict() for rsvp in rsvps], 200
+
 
             
 
