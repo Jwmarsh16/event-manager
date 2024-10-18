@@ -243,6 +243,30 @@ class EventDetail(Resource):
         db.session.commit()
         return {"message": "Event deleted successfully"}, 200
 
+class GroupList(Resource):
+    def get(self):
+        limit = request.args.get('limit', 30)
+        query = request.args.get('q', '')
+
+        if query:
+            groups = Group.query.filter(Group.name.ilike(f"%{query}%")).limit(limit).all()
+        else:
+            groups = Group.query.limit(limit).all()
+
+        return [group.to_dict() for group in groups], 200
+
+    @jwt_required()
+    def post(self):
+        current_user_id = get_jwt_identity()
+        data = request.get_json()
+
+        if not all(k in data for k in ("name", "description")):
+            return {"message": "Missing required fields"}, 400
+
+        new_group = Group(name=data['name'], description=data['description'], user_id=current_user_id)
+        db.session.add(new_group)
+        db.session.commit()
+        return {"message": "Group created successfully", "group": new_group.to_dict()}, 201
 
 
 
