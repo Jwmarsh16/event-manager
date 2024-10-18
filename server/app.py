@@ -92,6 +92,11 @@ class Login(Resource):
 
         return response
 
+class Logout(Resource):
+    @jwt_required()
+    def post(self):
+        return unset_jwt()
+
 
 
 
