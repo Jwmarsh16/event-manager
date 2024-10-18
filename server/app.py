@@ -319,6 +319,22 @@ class GroupInvite(Resource):
         db.session.commit()
         return {"message": "Invitation sent successfully", "invitation": new_invitation.to_dict()}, 201
 
+class GroupInvitations(Resource):
+    @jwt_required()
+    def get(self):
+        current_user_id = get_jwt_identity()
+        invitations = GroupInvitation.query.filter_by(invited_user_id=current_user_id, status='pending').all()
+        
+        serialized_invitations = [
+            {
+                'id': invite.id,
+                'group': invite.group.to_dict(),
+                'inviter': invite.inviter.to_dict()
+            }
+            for invite in invitations
+        ]
+        return serialized_invitations, 200
+
 
             
 
