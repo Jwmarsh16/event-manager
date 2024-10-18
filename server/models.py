@@ -65,3 +65,16 @@ class User(db.Model, SerializerMixin):
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+    
+
+class Group(db.Model, SerializerMixin):
+    __tablename__ = 'groups'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    members = db.relationship('User', secondary=group_member, back_populates='groups')
+    invitations = db.relationship('GroupInvitation', back_populates='group', cascade="all, delete-orphan")
+
+    serialize_rules = ('-invitations', 'members.username')
