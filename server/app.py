@@ -292,6 +292,33 @@ class GroupDetail(Resource):
         return {"message": "Group deleted successfully"}, 200
 
 
+# Group Invitations
+class GroupInvite(Resource):
+    @jwt_required()
+    def post(self, group_id):
+        current_user_id = get_jwt_identity()
+        data = request.get_json()
+
+        if not all(k in data for k in ("group_id", "invited_user_id")):
+            return {"message": "Missing required fields"}, 400
+        
+        group = Group.query.get_or_404(data["group_id"])
+
+        if str(group.user_id) != str(current_user_id):
+            return {"message": "You do not have permission to invite users to this group"}, 403
+
+        invited_user = User.query.get_or_404(data['invited_user_id'])
+
+        new_invitation = GroupInvitation(
+            group_id=group.id,
+            user_id=current_user_id,
+            invited_user_id=invited_user.id,
+            status='pending'
+        )
+        db.session.add(new_invitation)
+        db.session.commit()
+        return {"message": "Invitation sent successfully", "invitation": new_invitation.to_dict()}, 201
+
 
             
 
