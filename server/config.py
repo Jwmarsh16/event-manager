@@ -25,12 +25,25 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app=app, metadata=metadata)
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_COOKIE_SECURE'] = True  # Set to True in production when using HTTPS
+app.config['JWT_COOKIE_SAMESITE'] = 'None'
+app.config['JWT_COOKIE_HTTPONLY'] = True
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
+app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False
+app.config['JWT_CSRF_CHECK_FORM'] = True
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your_secure_secret_key')  # Updated to a more secure key
 
-migrate = Migrate(app=app, db=db)
+
+db = SQLAlchemy(metadata=metadata)
+
+migrate = Migrate(app, db)
+
+db.init_app(app)
 
 bcrypt = Bcrypt(app=app)
 
-api = Api(app=app)
-
-CORS(app)
+api = Api(app)
+CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
+  # Make sure the CORS origins match your frontend URL
