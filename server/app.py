@@ -68,6 +68,29 @@ class Register(Resource):
 
         return response  # Return the response object directly
 
+class Login(Resource):
+    def get(self):
+        return {"message": "Please log in."}, 200
+    
+    def post(self):
+        data = request.get_json()
+
+        if not all(k in data for k in ("username", "password")):
+            return {"message": "Missing required fields"}, 400
+
+        user = User.query.filter_by(username=data['username']).first()
+        if user is None or not user.check_password(data['password']):
+            return {"message": "Invalid username or password"}, 401
+
+        response = assign_access_refresh_tokens(user_id=user.id, url="/")
+
+
+        response_data = {"user": {"id": user.id}, "message": "Login successful"}
+        response.set_data(json.dumps(response_data))
+        response.mimetype = 'application/json'
+        response.status_code = 200
+
+        return response
 
 
 
