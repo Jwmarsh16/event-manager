@@ -90,3 +90,19 @@ class Group(db.Model, SerializerMixin):
     invitations = db.relationship('GroupInvitation', back_populates='group', cascade="all, delete-orphan")
 
     serialize_rules = ('-invitations', 'members.username')
+
+
+class Event(db.Model, SerializerMixin):
+    __tablename__ = 'events'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    location = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    user = db.relationship('User', back_populates='events')
+    comments = db.relationship('Comment', back_populates='event', cascade="all, delete-orphan")
+    rsvps = db.relationship('RSVP', back_populates='event', cascade="all, delete-orphan")
+
+    serialize_rules = ('-comments', '-rsvps', '-user')
