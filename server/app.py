@@ -349,6 +349,25 @@ class DenyGroupInvitation(Resource):
         return {"message": "Invitation denied", "invitation": invitation.to_dict()}, 200
 
 
+class AcceptGroupInvitation(Resource):
+    @jwt_required()
+    def put(self, invitation_id):
+        current_user_id = get_jwt_identity()
+        invitation = GroupInvitation.query.get_or_404(invitation_id)
+        
+        if str(invitation.invited_user_id) != str(current_user_id):
+            return {"message": "You do not have permission to accept this invitation"}, 403
+
+        invitation.status = 'accepted'
+
+        user = User.query.get_or_404(current_user_id)
+        group = Group.query.get_or_404(invitation.group_id)
+        user.add_group(group)
+
+        db.session.commit()
+        return {"message": "Invitation accepted", "invitation": invitation.to_dict()}, 200
+
+
             
 
 
