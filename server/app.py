@@ -100,7 +100,6 @@ class Logout(Resource):
 
 
 
-
 class UserList(Resource):
     def get(self):
         limit = request.args.get('limit', 30)  # Default to 30 if no limit is provided
@@ -112,6 +111,57 @@ class UserList(Resource):
             users = User.query.limit(limit).all()
 
         return [user.to_dict() for user in users], 200
+
+class UserProfile(Resource):
+    @jwt_required()
+    def get(self, user_id=None):
+        if user_id:
+            user = User.query.get_or_404(user_id)
+        else:
+            current_user_id = get_jwt_identity()
+            user = User.query.get_or_404(current_user_id)
+
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "groups": [{"id": group.id, "name": group.name} for group in user.groups],
+            "events": [
+                {
+                    "id": event.id,
+                    "name": event.name,
+                    "date": event.date.strftime('%Y-%m-%d'),
+                    "rsvp_status": next(
+                        (rsvp.status for rsvp in user.rsvps if rsvp.event_id == event.id),
+                        "Needs RSVP"
+                    )
+                }
+                for event in user.events
+            ]
+        }, 200
+
+    class DeleteProfile(Resource):
+        @jwt_required()
+        def delete(self):
+            current_user_id = get_jwt_identity()
+            print(f"Attempting to delete user with ID: {current_user_id}")
+
+            user = User.query.get_or_404(current_user_id)
+            try:
+                db.session.delete(user)
+                db.session.commit()
+                print(f"User with ID {current_user_id} deleted successgully")
+            except Exception as e:
+                print(f"Error occurred during user deletion: {e}")
+                return {"message": "Failed to delete user"}, 500
+
+            response = make_response(jsonify({"nessage": "User deleted successfully"}))
+            unset_jwt_cookies(response)
+
+            return response
+
+
+            
 
 
 if __name__ == "__main__":
