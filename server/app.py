@@ -391,6 +391,26 @@ class EventRSVPs(Resource):
         rsvps = RSVP.query.filter_by(event_id=event_id).all()
         return [rsvp.to_dict() for rsvp in rsvps], 200
 
+# Comment Resources
+class CommentList(Resource):
+    @jwt_required()
+    def post(self, event_id):
+        current_user_id = get_jwt_identity()
+        data = request.get_json()
+        new_comment = Comment(
+            content=data['content'],
+            user_id=current_user_id,
+            event_id=event_id
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return {"message": "Comment added successfully", "comment": new_comment.to_dict()}, 201
+
+class EventComments(Resource):
+    def get(self, event_id):
+        comments = Comment.query.filter_by(event_id=event_id).all()
+        return [comment.to_dict() for comment in comments], 200
+
 
             
 
