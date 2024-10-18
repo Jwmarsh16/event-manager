@@ -268,6 +268,29 @@ class GroupList(Resource):
         db.session.commit()
         return {"message": "Group created successfully", "group": new_group.to_dict()}, 201
 
+class GroupDetail(Resource):
+    def get(self, group_id):
+        group = Group.query.get_or_404(group_id)
+        return {
+            'id': group.id,
+            'name': group.name,
+            'description': group.description,
+            'user_id': group.user_id,
+            'members': [{'id': user.id, 'username': user.username} for user in group.members]
+        }, 200
+    
+    @jwt_required()
+    def delete(self, group_id):
+        current_user_id = str(get_jwt_identity())
+        group = Group.query.get_or_404(group_id)
+
+        if str(group.user_id) != current_user_id:
+            return {"message": "You do not have permission to delete this group"}, 403
+
+        db.session.delete(group)
+        db.session.commit()
+        return {"message": "Group deleted successfully"}, 200
+
 
 
             
