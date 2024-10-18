@@ -335,6 +335,19 @@ class GroupInvitations(Resource):
         ]
         return serialized_invitations, 200
 
+class DenyGroupInvitation(Resource):
+    @jwt_required()
+    def put(self, invitation_id):
+        current_user_id = get_jwt_identity()
+        invitation = GroupInvitation.query.get_or_404(invitation_id)
+
+        if str(invitation.invited_user_id) != str(current_user_id):
+            return {"message": "You do not have permission to deny this invitation"}, 403
+
+        invitation.status = 'denied'
+        db.session.commit()
+        return {"message": "Invitation denied", "invitation": invitation.to_dict()}, 200
+
 
             
 
