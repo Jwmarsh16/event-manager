@@ -5,6 +5,13 @@ import re
 import bcrypt
 
 
+
+group_member = db.Table('group_member',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True)
+)
+
+
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +72,11 @@ class User(db.Model, SerializerMixin):
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+    
+    def add_group(self, group):
+        if group not in self.groups:
+            self.groups.append(group)
+            db.session.commit()
     
 
 class Group(db.Model, SerializerMixin):
