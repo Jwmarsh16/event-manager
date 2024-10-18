@@ -12,6 +12,7 @@ flask-restful = "*"
 flask-migrate = "*"
 flask-bcrypt = "*"
 python-dotenv = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 
