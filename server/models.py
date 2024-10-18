@@ -121,3 +121,16 @@ class GroupInvitation(db.Model, SerializerMixin):
     group = db.relationship('Group', back_populates='invitations')
 
     serialize_rules = ('-inviter', '-invitee', '-group')
+
+
+class RSVP(db.Model, SerializerMixin):
+    __tablename__ = 'rsvps'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False)
+
+    user = db.relationship('User', back_populates='rsvps')
+    event = db.relationship('Event', back_populates='rsvps')
+
+    serialize_rules = ('-user', '-event')
