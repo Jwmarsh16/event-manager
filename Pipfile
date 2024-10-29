@@ -14,6 +14,7 @@ flask-bcrypt = "*"
 python-dotenv = "*"
 flask-jwt-extended = "*"
 faker = "*"
+gunicorn = "*"
 
 [dev-packages]
 
