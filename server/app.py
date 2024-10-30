@@ -412,25 +412,25 @@ class EventComments(Resource):
         return [comment.to_dict() for comment in comments], 200
 
 # Add the resources to the API
-api.add_resource(Register, '/register')
-api.add_resource(Login, '/login')
-api.add_resource(Logout, '/logout')
-api.add_resource(UserList, '/users')  # Updated to support search
-api.add_resource(UserProfile, '/profile', '/profile/<int:user_id>')
-api.add_resource(EventList, '/events')  # Updated to support search
-api.add_resource(EventDetail, '/events/<int:event_id>')
-api.add_resource(GroupList, '/groups')  # Updated to support search
-api.add_resource(GroupDetail, '/groups/<int:group_id>')
-api.add_resource(GroupInvite, '/groups/<int:group_id>/invite')
-api.add_resource(GroupInvitations, '/invitations')
-api.add_resource(RSVPList, '/rsvps')
-api.add_resource(EventRSVPs, '/events/<int:event_id>/rsvps')
-api.add_resource(CommentList, '/events/<int:event_id>/comments')
-api.add_resource(EventComments, '/events/<int:event_id>/comments')
-api.add_resource(AcceptGroupInvitation, '/invitations/<int:invitation_id>/accept')
-api.add_resource(DenyGroupInvitation, '/invitations/<int:invitation_id>/deny')
+api.add_resource(Register, '/api/register')
+api.add_resource(Login, '/api/login')
+api.add_resource(Logout, '/api/logout')
+api.add_resource(UserList, '/api/users')  # Updated to support search
+api.add_resource(UserProfile, '/api/profile', '/api/profile/<int:user_id>')
+api.add_resource(EventList, '/api/events')  # Updated to support search
+api.add_resource(EventDetail, '//apievents/<int:event_id>')
+api.add_resource(GroupList, '/api/groups')  # Updated to support search
+api.add_resource(GroupDetail, '/api/groups/<int:group_id>')
+api.add_resource(GroupInvite, '/api/groups/<int:group_id>/invite')
+api.add_resource(GroupInvitations, '/api/invitations')
+api.add_resource(RSVPList, '/api/rsvps')
+api.add_resource(EventRSVPs, '/api/events/<int:event_id>/rsvps')
+api.add_resource(CommentList, '/api/events/<int:event_id>/comments')
+api.add_resource(EventComments, '/api/events/<int:event_id>/comments')
+api.add_resource(AcceptGroupInvitation, '/api/invitations/<int:invitation_id>/accept')
+api.add_resource(DenyGroupInvitation, '/api/invitations/<int:invitation_id>/deny')
 # Add the resource to handle user profile deletion
-api.add_resource(DeleteProfile, '/profile/delete')
+api.add_resource(DeleteProfile, '/api/profile/delete')
             
 
 @app.errorhandler(404)
