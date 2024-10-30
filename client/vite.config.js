@@ -5,9 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: '../server/static', // Or another directory Flask can serve
-  }
-})
+    outDir: '../server/static', // Ensure this path aligns with Flask's static folder
+    emptyOutDir: true,           // Clears the output directory before each build
+  },
+});
 
 
 
