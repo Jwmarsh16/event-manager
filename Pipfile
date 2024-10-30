@@ -15,6 +15,7 @@ python-dotenv = "*"
 flask-jwt-extended = "*"
 faker = "*"
 gunicorn = "*"
+honcho = "*"
 
 [dev-packages]
 
