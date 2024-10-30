@@ -50,5 +50,5 @@ db.init_app(app)
 bcrypt = Bcrypt(app=app)
 
 api = Api(app)
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
   # Make sure the CORS origins match your frontend URL
