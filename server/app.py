@@ -1,4 +1,4 @@
-from flask import request, make_response, jsonify, redirect
+from flask import request, make_response, jsonify, redirect, render_template
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, set_access_cookies, unset_jwt_cookies, create_refresh_token, set_refresh_cookies
 from flask_restful import Resource
 from models import User, Event, Group, RSVP, Comment, GroupInvitation
@@ -24,8 +24,9 @@ def assign_access_refresh_tokens(user_id, url):
     return resp
 
 @app.route('/')
-def home():
-    return "Welcome to the Event Manager API!"
+def serve_index():
+    return app.send_static_file('index.html')
+
 
 
 # Register Resource
@@ -433,6 +434,9 @@ api.add_resource(DenyGroupInvitation, '/invitations/<int:invitation_id>/deny')
 api.add_resource(DeleteProfile, '/profile/delete')
             
 
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("index.html")
 
 if __name__ == "__main__":
   app.run(port=5555, debug=True)
