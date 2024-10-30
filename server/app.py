@@ -24,8 +24,9 @@ def assign_access_refresh_tokens(user_id, url):
     return resp
 
 @app.route('/')
-def home():
-    return "Welcome to the Event Manager API!"
+def serve_index():
+    return app.send_static_file('index.html')
+
 
 
 # Register Resource
