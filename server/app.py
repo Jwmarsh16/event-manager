@@ -419,7 +419,7 @@ api.add_resource(Logout, '/api/logout')
 api.add_resource(UserList, '/api/users')  # Updated to support search
 api.add_resource(UserProfile, '/api/profile', '/api/profile/<int:user_id>')
 api.add_resource(EventList, '/api/events')  # Updated to support search
-api.add_resource(EventDetail, '//apievents/<int:event_id>')
+api.add_resource(EventDetail, '/api/events/<int:event_id>')
 api.add_resource(GroupList, '/api/groups')  # Updated to support search
 api.add_resource(GroupDetail, '/api/groups/<int:group_id>')
 api.add_resource(GroupInvite, '/api/groups/<int:group_id>/invite')
