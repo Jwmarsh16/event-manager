@@ -1,14 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import Cookies from 'js-cookie';
 
-// Helper function to handle fetch requests with credentials
-const fetchWithCredentials = (url, options = {}) => fetch(url, {
-  ...options,
-  credentials: 'include', // Ensure cookies are sent with the request
-  headers: {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  },
-});
+// Helper function to handle fetch requests with credentials and CSRF token
+const fetchWithCredentials = (url, options = {}) => {
+  const csrfToken = Cookies.get('csrf_access_token');
+  return fetch(url, {
+    ...options,
+    credentials: 'include', // Ensure cookies are sent with the request
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to the headers
+      ...options.headers,
+    },
+  });
+};
+
 
 // Thunk to fetch all groups
 export const fetchGroups = createAsyncThunk('groups/fetchGroups', async (_, thunkAPI) => {

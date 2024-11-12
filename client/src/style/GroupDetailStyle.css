@@ -1,0 +1,149 @@
+/* Main Container Styling */
+.group-detail-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    background-color: #f0f4f8;
+}
+
+/* Group Card */
+.group-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 100%;
+    max-width: 750px;
+    transition: box-shadow 0.3s ease;
+}
+
+.group-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Header with Title and Delete Button */
+.group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.group-title {
+    font-size: 2.2rem;
+    color: #0074d9;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* Delete Button */
+.delete-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #ff6b6b;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s;
+    width: auto;
+    height: auto;
+    max-width: 150px; /* Set a max-width to prevent it from expanding too much */
+    min-width: 130px; /* Set a min-width to align with the invite button */
+    margin-left: auto; /* Align the delete button to the right in the group header */
+}
+
+.delete-button:hover {
+    background-color: #ff3b3b;
+}
+
+
+
+/* Group Description */
+.group-description {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 20px 0;
+    line-height: 1.6;
+    padding: 10px;
+    background-color: #f9fafc;
+    border-left: 4px solid #0074d9;
+    border-radius: 8px;
+}
+
+/* Members Section */
+.members-section {
+    margin-top: 30px;
+}
+
+.members-title {
+    font-size: 1.6rem;
+    color: #0074d9;
+    margin-bottom: 15px;
+}
+
+.members-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.member-item {
+    background-color: #e9f2fb;
+    padding: 10px 15px;
+    border-radius: 10px;
+    color: #004085;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s;
+}
+
+.member-item:hover {
+    background-color: #d0e8f6;
+}
+
+/* Invite Button */
+.invite-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 30px;
+    transition: background-color 0.3s;
+    justify-content: center;
+    max-width: 200px;
+}
+
+.invite-button:hover {
+    background-color: #005bb5;
+}
+
+/* Loading and Error Messages */
+.loading-message,
+.error-message {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-top: 20px;
+}
+
+.loading-message {
+    color: #007bff;
+}
+
+.error-message {
+    color: #dc3545;
+}

@@ -3,11 +3,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../redux/eventSlice';
 import RSVPs from './RSVPs';
+import '../style/EventDetailStyle.css';
 
 function EventDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // useNavigate replaces useHistory in react-router-dom v6
+  const navigate = useNavigate();
 
   const event = useSelector((state) => state.events.currentEvent);
   const loading = useSelector((state) => state.events.loading);
@@ -21,38 +22,53 @@ function EventDetail() {
   const handleDeleteEvent = () => {
     if (window.confirm('Are you sure you want to delete this event?')) {
       dispatch(deleteEvent(id)).then(() => {
-        navigate(`/profile/${currentUserId}`); // Redirect to events list after deletion
+        navigate(`/profile/${currentUserId}`);
       });
     }
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div className="error-message">Error: {error}</div>;
   }
 
   return (
-    <div>
+    <div className="event-detail">
       {event && (
         <>
-          <h2>{event.name}</h2>
-          <p>Date: {event.date}</p>
-          <p>Location: {event.location}</p>
-          <p>Description: {event.description}</p>
-          <button onClick={handleDeleteEvent}>Delete Event</button> {/* Button to delete the event */}
-          <RSVPs eventId={event.id} /> {/* Include the RSVP form here */}
-          
-          <h3>RSVPs:</h3>
-          <ul>
-            {event.rsvps && event.rsvps.map(rsvp => (
-              <li key={rsvp.user_id}>
-                {rsvp.username} - {rsvp.status}
-              </li>
-            ))}
-          </ul>
+          <div className="event-info">
+            <h2>{event.name}</h2>
+            <p><strong>Date:</strong> {new Date(event.date).toLocaleDateString()}</p>
+            <p><strong>Location:</strong> {event.location}</p>
+            <p>{event.description}</p>
+            {/* Only show delete button if the current user is the creator of the event */}
+            {currentUserId === event.user_id && (
+              <button className="delete-button" onClick={handleDeleteEvent}>
+                Delete Event
+              </button>
+            )}
+          </div>
+
+          <div className="rsvp-section">
+            <RSVPs eventId={event.id} />
+          </div>
+
+          <div className="rsvp-list">
+            <h3>RSVPs</h3>
+            <ul>
+              {event.rsvps && event.rsvps.map(rsvp => (
+                <li key={rsvp.user_id}>
+                  <span className="rsvp-username">{rsvp.username}</span> - 
+                  <span className={`rsvp-status ${rsvp.status.toLowerCase()}`}>
+                    {rsvp.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </>
       )}
     </div>

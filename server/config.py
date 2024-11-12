@@ -20,12 +20,15 @@ naming_convention = {
 
 metadata = MetaData(naming_convention=naming_convention)
 
+#app = Flask(__name__)
+
 app = Flask(
     __name__,
     static_url_path='',
     static_folder='../client/dist',
     template_folder='../client/dist'
 )
+
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -50,6 +53,8 @@ db.init_app(app)
 bcrypt = Bcrypt(app=app)
 
 api = Api(app)
+
+
 #Development
 #CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
 #Make sure the CORS origins match your frontend URL

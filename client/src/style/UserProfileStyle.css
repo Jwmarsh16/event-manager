@@ -1,0 +1,116 @@
+/* General Profile Page Styling */
+.user-profile {
+    max-width: 850px;
+    margin: 40px auto;
+    padding: 30px;
+    background: linear-gradient(135deg, #f9f9f9, #e3f2fd);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Profile Header */
+.profile-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.profile-icon {
+    color: #007bff;
+    margin-bottom: 15px;
+    animation: pop 0.5s ease;
+}
+
+@keyframes pop {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+}
+
+.profile-header h2 {
+    font-size: 30px;
+    color: #343a40;
+    margin-bottom: 5px;
+}
+
+.profile-email {
+    color: #6c757d;
+    font-size: 16px;
+}
+
+/* Profile Sections */
+.profile-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s;
+}
+
+.profile-section:hover {
+    background: #f0f8ff;
+}
+
+.profile-section h3 {
+    font-size: 22px;
+    color: #107880;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+/* Profile List */
+.profile-list {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.profile-list-item {
+    background: #f8f9fa;
+    padding: 12px 18px;
+    margin: 8px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    color: #007bff;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.profile-list-item:hover {
+    transform: translateX(10px);
+    background: #d0ebff;
+}
+
+.profile-list-item a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.profile-list-item a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Delete Button */
+.delete-button {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 25px;
+    background: #dc3545;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.delete-button:hover {
+    background: #c82333;
+    transform: scale(1.02);
+}

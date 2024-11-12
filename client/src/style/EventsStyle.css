@@ -1,0 +1,105 @@
+/* General Page Styling */
+.events-page {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.events-page h2 {
+    color: #107880;
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+/* Form Styling */
+.event-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 500px;
+    margin: 0 auto 30px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.event-form input[type="text"],
+.event-form input[type="datetime-local"],
+.event-form textarea {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.event-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.event-form button {
+    padding: 12px;
+    background-color: #107880;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.event-form button:hover {
+    background-color: #0b5c66;
+}
+
+/* Error Message Styling */
+.error-message {
+    text-align: center;
+    color: #d9534f;
+    margin: 10px 0;
+}
+
+/* Events List */
+.events-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 0 10px;
+}
+
+/* Event Card */
+.event-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.event-card h3 a {
+    color: #107880;
+    text-decoration: none;
+}
+
+.event-card h3 a:hover {
+    text-decoration: underline;
+}
+
+.event-card p {
+    margin: 8px 0;
+    color: #555;
+}
+
+.event-card p strong {
+    font-weight: bold;
+}

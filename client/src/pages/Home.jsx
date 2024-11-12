@@ -5,6 +5,7 @@ import { resetSearchResults as resetUserSearchResults } from '../redux/userSlice
 import { resetSearchResults as resetEventSearchResults } from '../redux/eventSlice';
 import { resetSearchResults as resetGroupSearchResults } from '../redux/groupSlice';
 import Search from '../components/Search';
+import '../style/HomeStyle.css';
 
 function Home() {
   const dispatch = useDispatch();

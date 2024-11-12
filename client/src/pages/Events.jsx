@@ -2,16 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchEvents, createEvent } from '../redux/eventSlice';
+import '../style/EventsStyle.css';
 
 function Events() {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // useNavigate hook to programmatically navigate
+  const navigate = useNavigate();
   const events = useSelector((state) => state.events.events);
   const loading = useSelector((state) => state.events.loading);
   const error = useSelector((state) => state.events.error);
 
   const [name, setName] = useState('');
-  const [dateTime, setDateTime] = useState('');  // Changed to datetime
+  const [dateTime, setDateTime] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
 
@@ -31,25 +32,24 @@ function Events() {
     const result = await dispatch(createEvent(newEvent));
 
     if (result.meta.requestStatus === 'fulfilled') {
-      // Re-fetch events to ensure the new event is displayed
       dispatch(fetchEvents());
-      // Optionally, navigate to the event page
       navigate(`/events`);
     }
 
-    setName(''); // Clear the form fields after submission
+    setName('');
     setDateTime('');
     setLocation('');
     setDescription('');
   };
 
   return (
-    <div>
-      <h2>Events</h2>
-      <form onSubmit={handleCreateEvent}>
+    <div className="events-page">
+      <h2>Upcoming Events</h2>
+
+      <form className="event-form" onSubmit={handleCreateEvent}>
         <input
           type="text"
-          placeholder="Name"
+          placeholder="Event Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -64,23 +64,27 @@ function Events() {
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
-        <input
-          type="text"
+        <textarea
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
         <button type="submit">Create Event</button>
       </form>
+
       {loading && <p>Loading events...</p>}
-      {error && <p>Error: {error}</p>}
-      <ul>
+      {error && <p className="error-message">Error: {error}</p>}
+
+      <div className="events-list">
         {events.map((event) => (
-          <li key={event.id}>
-            <Link to={`/events/${event.id}`}>{event.name} - {event.date}</Link>
-          </li>
+          <div key={event.id} className="event-card">
+            <h3><Link to={`/events/${event.id}`}>{event.name}</Link></h3>
+            <p><strong>Date:</strong> {new Date(event.date).toLocaleDateString()}</p>
+            <p><strong>Location:</strong> {event.location}</p>
+            <p>{event.description}</p>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

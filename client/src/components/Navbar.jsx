@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { logout, resetAuthState } from '../redux/authSlice';
+import '../style/NavbarStyle.css';
 
 function Navbar() {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -13,9 +14,8 @@ function Navbar() {
     try {
       const result = await dispatch(logout());
       if (result.meta.requestStatus === 'fulfilled') {
-        dispatch(resetAuthState()); // Reset auth state immediately after successful logout
-        console.log('Logout successful, navigating to /login');
-        navigate('/login'); // Navigate to the login page
+        dispatch(resetAuthState());
+        navigate('/login');
       } else {
         console.error('Logout failed');
       }
@@ -28,33 +28,33 @@ function Navbar() {
     <nav>
       <ul>
         <li className={window.location.pathname === '/' ? 'active' : ''}>
-          <Link to="/">Home</Link>
+          <Link to="/" className="navbar-button">Home</Link>
         </li>
         {isAuthenticated ? (
           <>
             <li className={window.location.pathname === '/events' ? 'active' : ''}>
-              <Link to="/events">Events</Link>
+              <Link to="/events" className="navbar-button">Events</Link>
             </li>
             <li className={window.location.pathname === '/groups' ? 'active' : ''}>
-              <Link to="/groups">Groups</Link>
+              <Link to="/groups" className="navbar-button">Groups</Link>
             </li>
             <li className={window.location.pathname === `/profile/${currentUserId}` ? 'active' : ''}>
-              <Link to={`/profile/${currentUserId}`}>Profile</Link>
+              <Link to={`/profile/${currentUserId}`} className="navbar-button">Profile</Link>
             </li>
             <li className={window.location.pathname === '/invitations' ? 'active' : ''}>
-              <Link to="/invitations">Invitations</Link>
+              <Link to="/invitations" className="navbar-button">Invitations</Link>
             </li>
             <li>
-              <button className="button" onClick={handleLogout}>Logout</button>
+              <button onClick={handleLogout} className="navbar-button">Logout</button>
             </li>
           </>
         ) : (
           <>
             <li className={window.location.pathname === '/login' ? 'active' : ''}>
-              <Link to="/login">Login</Link>
+              <Link to="/login" className="navbar-button">Login</Link>
             </li>
             <li className={window.location.pathname === '/register' ? 'active' : ''}>
-              <Link to="/register">Register</Link>
+              <Link to="/register" className="navbar-button">Register</Link>
             </li>
           </>
         )}

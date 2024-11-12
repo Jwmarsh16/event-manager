@@ -1,0 +1,117 @@
+/* General Page Styling */
+.groups-page {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f0f2f5;
+}
+
+.groups-page h2 {
+    text-align: center;
+    color: #107880;
+    font-size: 2em;
+    margin-bottom: 30px;
+}
+
+/* Form Styling */
+.group-form-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.group-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 500px;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.group-form input,
+.group-form textarea {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+}
+
+.group-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.group-form button {
+    background-color: #107880;
+    color: #fff;
+    padding: 10px;
+    font-size: 1em;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.group-form button:hover {
+    background-color: #0a5d62;
+}
+
+/* Group List Styling */
+.groups-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.group-card {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.group-card:hover {
+    transform: translateY(-5px);
+}
+
+.group-link {
+    text-decoration: none;
+    color: #333;
+}
+
+.group-card h3 {
+    color: #107880;
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.group-card p {
+    color: #666;
+    font-size: 1em;
+    line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .groups-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Loading and Error Message Styling */
+.loading-message, .error-message {
+    text-align: center;
+    color: #107880;
+    font-size: 1.2em;
+    margin-top: 20px;
+}
+
+.error-message {
+    color: #d9534f;
+}
