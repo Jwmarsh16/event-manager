@@ -36,7 +36,7 @@ app.config['JWT_COOKIE_SAMESITE'] = 'None'
 app.config['JWT_COOKIE_HTTPONLY'] = True
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
 app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'
-app.config['JWT_COOKIE_CSRF_PROTECT'] = False
+app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config['JWT_CSRF_CHECK_FORM'] = True
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your_secure_secret_key')  # Updated to a more secure key
 
