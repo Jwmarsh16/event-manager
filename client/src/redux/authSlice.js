@@ -47,7 +47,7 @@ export const login = createAsyncThunk('auth/login', async ({ username, password 
 export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
   try {
     // Use js-cookie to retrieve the CSRF token from cookies
-    const csrfToken = Cookies.get('XSRF-TOKEN'); // Adjust the cookie name as needed
+    const csrfToken = Cookies.get('csrf_access_token'); // Adjust the cookie name as needed
 
     const response = await fetchWithCredentials('/api/logout', {
       method: 'POST',
