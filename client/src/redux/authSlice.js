@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import Cookies from 'js-cookie';
 
-// Helper function to handle fetch requests
+// Helper function to handle fetch requests with credentials and headers
 const fetchWithCredentials = (url, options) => fetch(url, {
   ...options,
   credentials: 'include',
@@ -10,7 +11,7 @@ const fetchWithCredentials = (url, options) => fetch(url, {
   },
 });
 
-// Thunks for login and registration
+// Thunks for login, registration, logout, and profile deletion
 export const registerUser = createAsyncThunk('auth/registerUser', async (userData, thunkAPI) => {
   try {
     const response = await fetchWithCredentials('/api/register', {
@@ -45,8 +46,14 @@ export const login = createAsyncThunk('auth/login', async ({ username, password 
 
 export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
   try {
+    // Use js-cookie to retrieve the CSRF token from cookies
+    const csrfToken = Cookies.get('XSRF-TOKEN'); // Adjust the cookie name as needed
+
     const response = await fetchWithCredentials('/api/logout', {
       method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': csrfToken, // Include CSRF token in the headers
+      },
     });
 
     if (!response.ok) throw new Error('Failed to logout');

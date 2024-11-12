@@ -52,22 +52,23 @@ class Register(Resource):
         except ValueError as e:
             return {"message": str(e)}, 400
 
-        # Create access token
+        # Generate tokens
         access_token = create_access_token(identity=new_user.id)
+        refresh_token = create_refresh_token(identity=new_user.id)
 
-        # Prepare the response data
+        # Prepare response data
         response_data = {"message": "User registered successfully", "user": new_user.to_dict()}
-
-        # Use `make_response` to create a response object
-        response = make_response(jsonify(response_data))  # Convert response_data to JSON
-
-        # Set cookies and response headers
-        response.set_cookie('access_token', access_token, httponly=True, secure=True, samesite='None')
-
+        response = make_response(jsonify(response_data))
+        
+        # Set JWT cookies
+        set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
+        
         # Set the status code directly on the response object
-        response.status_code = 201  # Set the status code for the response
+        response.status_code = 201
 
-        return response  # Return the response object directly
+        return response
+
 
 class Login(Resource):
     def get(self):
@@ -97,8 +98,6 @@ class Logout(Resource):
     @jwt_required()
     def post(self):
         return unset_jwt()
-
-
 
 
 class UserList(Resource):

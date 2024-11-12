@@ -38,7 +38,7 @@ app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
 app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config['JWT_CSRF_CHECK_FORM'] = True
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your_secure_secret_key')  # Updated to a more secure key
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Updated to a more secure key
 
 
 db = SQLAlchemy(metadata=metadata)
@@ -50,5 +50,9 @@ db.init_app(app)
 bcrypt = Bcrypt(app=app)
 
 api = Api(app)
-CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
-  # Make sure the CORS origins match your frontend URL
+#Development
+#CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
+#Make sure the CORS origins match your frontend URL
+
+#Production
+CORS(app, supports_credentials=True, origins=["https://event-manager-dtae.onrender.com"])

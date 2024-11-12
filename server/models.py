@@ -3,7 +3,7 @@ from config import db
 from sqlalchemy.orm import validates
 import re
 import bcrypt
-
+import secrets
 
 
 group_member = db.Table('group_member',
