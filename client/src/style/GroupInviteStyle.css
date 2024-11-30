@@ -1,0 +1,118 @@
+/* General Container */
+.group-invite-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Title Styling */
+.invite-title {
+    text-align: center;
+    color: #107880;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+}
+
+/* Search Input */
+.search-input {
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    outline: none;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s ease;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.search-input:focus {
+    border-color: #107880;
+}
+
+/* User Results Container */
+.user-results {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Individual User Item */
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.user-item:hover {
+    background-color: #e9f2fb;
+    transform: translateY(-2px);
+}
+
+/* Invite User Button */
+.invite-user-button {
+    padding: 8px 12px;
+    background-color: #107880;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.invite-user-button:hover {
+    background-color: #0b5c66;
+    transform: scale(1.05);
+}
+
+/* No Results Message */
+.no-results {
+    text-align: center;
+    color: #888;
+    font-size: 1rem;
+}
+
+/* Feedback Message */
+.feedback-message {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 1rem;
+    color: #107880;
+    font-weight: bold;
+}
+
+/* Error Feedback */
+.feedback-message.error {
+    color: #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .group-invite-container {
+        padding: 15px;
+    }
+
+    .invite-title {
+        font-size: 1.5rem;
+    }
+
+    .search-input {
+        font-size: 0.9rem;
+    }
+
+    .invite-user-button {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+    }
+}

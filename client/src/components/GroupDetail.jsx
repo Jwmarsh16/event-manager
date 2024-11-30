@@ -19,7 +19,7 @@ function GroupDetail() {
   }, [dispatch, id]);
 
   const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this group?")) {
+    if (window.confirm('Are you sure you want to delete this group?')) {
       dispatch(deleteGroup(id)).then(() => navigate(`/profile/${currentUserId}`));
     }
   };
@@ -33,20 +33,22 @@ function GroupDetail() {
   }
 
   return (
-    <div className="group-detail-container">
+    <div className="group-detail-page">
       {group && (
-        <div className="group-card">
-          <div className="group-header">
-            <h2 className="group-title">{group.name}</h2>
-            {/* Only show delete button if the current user is the creator of the group */}
-            {currentUserId === group.user_id && (
-              <button onClick={handleDelete} className="delete-button" title="Delete Group">
-                <FaTrashAlt /> Delete Group
-              </button>
-            )}
-          </div>
-          <p className="group-description">{group.description}</p>
+        <>
+          {/* Hero Section */}
+          <header className="group-hero">
+            <h1>{group.name}</h1>
+            <p>{group.description}</p>
+          </header>
 
+          {/* Group Stats Section */}
+          <section className="group-stats">
+            <p><strong>Members:</strong> {group.members.length}</p>
+            <p><strong>Created On:</strong> {new Date(group.created_at).toLocaleDateString()}</p>
+          </section>
+
+          {/* Members Section */}
           <div className="members-section">
             <h3 className="members-title">Members</h3>
             <ul className="members-list">
@@ -56,15 +58,22 @@ function GroupDetail() {
                 </li>
               ))}
             </ul>
+
+            {/* Invite Users Button */}
+            {currentUserId === group.user_id && (
+              <Link to={`/groups/${group.id}/invite`} className="invite-button">
+                <FaUserPlus /> Invite Users
+              </Link>
+            )}
           </div>
 
-          {/* Only the creator of the group should see the Invite Users button */}
+          {/* Delete Button */}
           {currentUserId === group.user_id && (
-            <Link to={`/groups/${group.id}/invite`} className="invite-button">
-              <FaUserPlus /> Invite Users
-            </Link>
+            <button onClick={handleDelete} className="delete-button" title="Delete Group">
+              <FaTrashAlt /> Delete Group
+            </button>
           )}
-        </div>
+        </>
       )}
     </div>
   );

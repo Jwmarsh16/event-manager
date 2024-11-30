@@ -1,39 +1,81 @@
 /* General Page Styling */
 .events-page {
-    max-width: 1000px;
-    margin: 20px auto;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    background-color: #f5f7fa;
 }
 
-.events-page h2 {
-    color: #107880;
+/* Hero Section */
+.events-hero {
     text-align: center;
-    font-size: 2em;
+    background: linear-gradient(135deg, #107880, #00bcd4);
+    color: white;
+    padding: 50px 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.events-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.events-hero p {
+    font-size: 1.2rem;
     margin-bottom: 20px;
 }
 
-/* Form Styling */
+/* Search Bar */
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px auto 40px;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #107880;
+}
+
+/* Event Form */
 .event-form {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-width: 500px;
-    margin: 0 auto 30px auto;
+    max-width: 600px;
+    margin: 0 auto 30px;
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.event-form input[type="text"],
-.event-form input[type="datetime-local"],
+.event-form h2 {
+    text-align: center;
+    color: #107880;
+    margin-bottom: 15px;
+}
+
+.event-form input,
 .event-form textarea {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    font-size: 1em;
+    font-size: 1rem;
     outline: none;
-    box-sizing: border-box;
 }
 
 .event-form textarea {
@@ -47,7 +89,7 @@
     color: white;
     border: none;
     border-radius: 5px;
-    font-size: 1em;
+    font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
@@ -56,27 +98,20 @@
     background-color: #0b5c66;
 }
 
-/* Error Message Styling */
-.error-message {
-    text-align: center;
-    color: #d9534f;
-    margin: 10px 0;
-}
-
 /* Events List */
 .events-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
-    padding: 0 10px;
+    margin-top: 30px;
 }
 
 /* Event Card */
 .event-card {
     background-color: #fff;
+    padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     text-align: center;
 }
@@ -100,6 +135,38 @@
     color: #555;
 }
 
-.event-card p strong {
-    font-weight: bold;
+/* No Results Message */
+.no-results {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #888;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .search-container {
+        margin: 20px 10px;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+
+    .event-form {
+        padding: 15px;
+    }
+
+    .event-form input,
+    .event-form textarea {
+        font-size: 0.9rem;
+    }
+
+    .events-list {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .event-card {
+        padding: 15px;
+    }
 }

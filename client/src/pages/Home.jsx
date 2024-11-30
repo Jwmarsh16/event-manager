@@ -22,16 +22,27 @@ function Home() {
   const groups = useSelector((state) => state.groups.searchResults || []);
 
   return (
-    <div>
-      <h1>Welcome to the Event Manager</h1>
+    <div className="home-container">
+      {/* Hero Section */}
+      <header className="hero">
+        <h1>Welcome to Event Manager</h1>
+        <p>Plan, join, and manage events effortlessly. Connect with users and discover groups tailored to your interests.</p>
+        <div className="hero-buttons">
+          <Link to="/events" className="hero-button">Create an Event</Link>
+          <Link to="/groups" className="hero-button">Explore Groups</Link>
+        </div>
+      </header>
+
+      {/* Search Section */}
       <Search />
-      
+
+      {/* Featured Sections */}
       <div className="home-columns">
         <div className="home-column">
-          <h2>Users</h2>
+          <h2>Featured Users</h2>
           {users.length > 0 ? (
             <ul>
-              {users.map(user => (
+              {users.slice(0, 5).map(user => (
                 <li key={user.id}>
                   <Link to={`/profile/${user.id}`}>{user.username}</Link>
                 </li>
@@ -43,10 +54,10 @@ function Home() {
         </div>
 
         <div className="home-column">
-          <h2>Events</h2>
+          <h2>Upcoming Events</h2>
           {events.length > 0 ? (
             <ul>
-              {events.map(event => (
+              {events.slice(0, 5).map(event => (
                 <li key={event.id}>
                   <Link to={`/events/${event.id}`}>{event.name}</Link> - {new Date(event.date).toLocaleDateString()}
                 </li>
@@ -58,10 +69,10 @@ function Home() {
         </div>
 
         <div className="home-column">
-          <h2>Groups</h2>
+          <h2>Popular Groups</h2>
           {groups.length > 0 ? (
             <ul>
-              {groups.map(group => (
+              {groups.slice(0, 5).map(group => (
                 <li key={group.id}>
                   <Link to={`/groups/${group.id}`}>{group.name}</Link> - {group.description}
                 </li>
@@ -72,6 +83,16 @@ function Home() {
           )}
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="footer">
+        <p>&copy; {new Date().getFullYear()} Event Manager. All rights reserved.</p>
+        <div className="footer-links">
+          <Link to="/about">About Us</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/privacy-policy">Privacy Policy</Link>
+        </div>
+      </footer>
     </div>
   );
 }

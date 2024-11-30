@@ -16,6 +16,8 @@ flask-jwt-extended = "*"
 faker = "*"
 gunicorn = "*"
 honcho = "*"
+pytest = "*"
+flask-wtf = "*"
 
 [dev-packages]
 

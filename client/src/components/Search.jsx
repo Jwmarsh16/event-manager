@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { searchUsers, resetSearchResults as resetUserSearchResults } from '../redux/userSlice';
 import { searchEvents, resetSearchResults as resetEventSearchResults } from '../redux/eventSlice';
 import { searchGroups, resetSearchResults as resetGroupSearchResults } from '../redux/groupSlice';
+import '../style/SearchStyle.css'; // Add a separate CSS file for search-specific styles
 
 function Search() {
   const [query, setQuery] = useState('');
@@ -23,15 +24,16 @@ function Search() {
   };
 
   return (
-    <div>
-      <form onSubmit={handleSearch}>
+    <div className="search-container">
+      <form className="search-form" onSubmit={handleSearch}>
         <input
           type="text"
+          className="search-input"
           placeholder="Search users, events, groups..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button type="submit">Search</button>
+        <button className="search-button" type="submit">Search</button>
       </form>
     </div>
   );

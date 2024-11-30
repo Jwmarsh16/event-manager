@@ -3,8 +3,10 @@ nav {
   background-color: #107880;
   padding: 10px 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
+/* Navigation List */
 nav ul {
   list-style: none;
   margin: 0;
@@ -14,6 +16,7 @@ nav ul {
   align-items: center;
 }
 
+/* Navigation Items */
 nav ul li {
   margin: 0 15px;
 }
@@ -42,4 +45,66 @@ nav ul li {
 nav ul li.active .navbar-button {
   background-color: #0056b3;
   color: #fff;
+}
+
+.navbar-toggle {
+  display: none;
+  background-color: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.8em;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+}
+
+/* Mobile-Friendly Styles */
+@media (max-width: 768px) {
+  /* Make Navbar Collapsible */
+  nav {
+    padding: 30px;
+  }
+
+  nav ul {
+    display: none; /* Hide links by default */
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0px;
+    margin-top: 10%;
+    margin-left: -15px;
+    width: 100%;
+    transform: translateY(-10px);
+  }
+  nav ul li {
+    margin: 5px 0;
+    padding: 5px;
+    border-bottom: 0px solid #ccc;
+  }
+
+  /* Show Navbar When Toggled */
+  nav ul.active {
+    display: flex;
+  }
+
+  /* Hamburger Menu Button */
+  .navbar-toggle {
+    display: block;
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.8em;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+  }
+
+  .navbar-button {
+    width: 100%;
+    font-size: .8em;
+    text-align: center;
+  }
 }

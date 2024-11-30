@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../redux/authSlice';
+import '../style/RegisterStyle.css'; // Import the new CSS file
 
 function Register() {
   const [username, setUsername] = useState('');
@@ -11,7 +12,7 @@ function Register() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   const { loading, error } = useSelector((state) => state.auth);
 
   const validate = () => {
@@ -62,42 +63,47 @@ function Register() {
   };
 
   return (
-    <div>
-      <h2>Register</h2>
-      <form onSubmit={handleRegister}>
-        <div>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          {errors.username && <p className="error">{errors.username}</p>}
-        </div>
-        <div>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          {errors.email && <p className="error">{errors.email}</p>}
-        </div>
-        <div>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {errors.password && <p className="error">{errors.password}</p>}
-        </div>
-        <button type="submit" disabled={loading}>
-          Register
-        </button>
-      </form>
-      {loading && <p>Registering...</p>}
-      {error && <p>Error: {error}</p>}
+    <div className="register-container">
+      <div className="register-form-wrapper">
+        <h2 className="register-title">Register</h2>
+        <form className="register-form" onSubmit={handleRegister}>
+          <div>
+            <input
+              type="text"
+              className="register-input"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            {errors.username && <p className="error-text">{errors.username}</p>}
+          </div>
+          <div>
+            <input
+              type="email"
+              className="register-input"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {errors.email && <p className="error-text">{errors.email}</p>}
+          </div>
+          <div>
+            <input
+              type="password"
+              className="register-input"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {errors.password && <p className="error-text">{errors.password}</p>}
+          </div>
+          <button type="submit" className="register-button" disabled={loading}>
+            Register
+          </button>
+        </form>
+        {loading && <p className="info-text">Registering...</p>}
+        {error && <p className="error-text">Error: {error}</p>}
+      </div>
     </div>
   );
 }

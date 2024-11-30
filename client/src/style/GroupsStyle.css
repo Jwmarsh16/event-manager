@@ -1,43 +1,88 @@
 /* General Page Styling */
 .groups-page {
-    max-width: 900px;
-    margin: 20px auto;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    background-color: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    background-color: #f5f7fa;
 }
 
-.groups-page h2 {
+/* Hero Section */
+.groups-hero {
     text-align: center;
-    color: #107880;
-    font-size: 2em;
+    background: linear-gradient(135deg, #107880, #00bcd4);
+    color: white;
+    padding: 50px 20px;
+    border-radius: 8px;
     margin-bottom: 30px;
+}
+
+.groups-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.groups-hero p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.groups-hero-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Add space between buttons */
+    flex-wrap: wrap; /* Allow wrapping for smaller screens */
+    margin-top: 20px;
+}
+
+.groups-hero-buttons .hero-button {
+    text-decoration: none;
+    color: white;
+    background-color: #0a7e8c;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1rem; /* Adjust font size */
+    white-space: nowrap; /* Prevent text wrapping inside buttons */
+}
+
+.groups-hero-buttons .hero-button:hover {
+    background-color: #086869;
+    transform: scale(1.05); /* Slightly enlarge on hover */
 }
 
 /* Form Styling */
 .group-form-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 30px;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.group-form-container h2 {
+    font-size: 2rem;
+    color: #107880;
+    margin-bottom: 20px;
 }
 
 .group-form {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 500px;
-    background-color: #fff;
-    border-radius: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
     padding: 20px;
+    border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .group-form input,
 .group-form textarea {
-    margin-bottom: 15px;
     padding: 10px;
-    border-radius: 5px;
+    margin-bottom: 15px;
     border: 1px solid #ccc;
-    font-size: 1em;
+    border-radius: 5px;
+    font-size: 1rem;
 }
 
 .group-form textarea {
@@ -46,13 +91,13 @@
 }
 
 .group-form button {
-    background-color: #107880;
-    color: #fff;
     padding: 10px;
-    font-size: 1em;
+    background-color: #107880;
+    color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 1rem;
     transition: background-color 0.3s ease;
 }
 
@@ -60,58 +105,126 @@
     background-color: #0a5d62;
 }
 
-/* Group List Styling */
+/* Groups List */
+.groups-list {
+    margin-top: 60px; /* Add more spacing above the section */
+    padding: 0 10px; /* Add padding to prevent overlap */
+    margin-bottom: 80px;
+}
+
+.groups-list h2 {
+    text-align: center;
+    font-size: 2rem;
+    color: #107880;
+    margin-bottom: 30px;
+}
+
 .groups-list {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 65px;
+    justify-content: center; /* Ensure cards are centered on smaller screens */
 }
 
 .group-card {
-    background-color: #fff;
-    border-radius: 8px;
+    background-color: white;
     padding: 20px;
+    border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
+    transition: transform 0.3s ease;
+    text-align: center; /* Center-align content inside the cards */
 }
 
 .group-card:hover {
     transform: translateY(-5px);
 }
 
-.group-link {
-    text-decoration: none;
-    color: #333;
-}
-
 .group-card h3 {
     color: #107880;
-    font-size: 1.5em;
     margin-bottom: 10px;
+    font-size: 1.5rem; /* Increase title size */
 }
 
 .group-card p {
-    color: #666;
-    font-size: 1em;
-    line-height: 1.4;
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.5; /* Improve readability */
+}
+
+/* Footer */
+.groups-footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #107880;
+    color: white;
+    margin-top: 40px;
+    border-radius: 8px;
+}
+
+.footer-links a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: #cce7e8;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    /* Adjust the groups list layout for small screens */
     .groups-list {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Stack cards vertically */
+        gap: 50px; /* Reduce spacing for smaller screens */
+        margin-right: 30px;
     }
-}
 
-/* Loading and Error Message Styling */
-.loading-message, .error-message {
-    text-align: center;
-    color: #107880;
-    font-size: 1.2em;
-    margin-top: 20px;
-}
+    /* Adjust form layout for smaller screens */
+    .group-form {
+        padding: 15px;
+    }
 
-.error-message {
-    color: #d9534f;
+    .group-form input,
+    .group-form textarea {
+        font-size: 0.9rem;
+    }
+
+    .group-form button {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    /* Adjust card layout */
+    .group-card {
+        padding: 15px;
+    }
+
+    .group-card h3 {
+        font-size: 1.3rem;
+    }
+
+    .group-card p {
+        font-size: 0.9rem;
+    }
+
+    /* Adjust heading size */
+    .groups-list h2 {
+        font-size: 1.8rem;
+    }
+
+    .groups-hero-buttons {
+        flex-direction: column; /* Stack buttons vertically */
+        align-items: center; /* Center-align stacked buttons */
+        gap: 15px; /* Reduce gap between buttons for smaller screens */
+    }
+
+    .groups-hero-buttons .hero-button {
+        width: 60%; /* Full-width buttons on smaller screens */
+        max-width: 300px; /* Limit width for readability */
+        padding: 12px 20px; /* Increase padding slightly */
+        font-size: 0.95rem; /* Adjust font size */
+    }
 }

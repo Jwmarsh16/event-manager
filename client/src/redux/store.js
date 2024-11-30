@@ -5,6 +5,7 @@ import groupReducer from './groupSlice';
 import rsvpReducer from './rsvpSlice';
 import commentReducer from './commentSlice';
 import userReducer from './userSlice';
+import inviteReducer from './inviteSlice';
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     rsvps: rsvpReducer,
     comments: commentReducer,
     users: userReducer,
+    invites: inviteReducer,
   },
 });
 

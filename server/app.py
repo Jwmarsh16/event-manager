@@ -1,13 +1,15 @@
 from flask import request, make_response, jsonify, redirect, render_template
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, set_access_cookies, unset_jwt_cookies, create_refresh_token, set_refresh_cookies
+from flask_wtf.csrf import CSRFProtect, generate_csrf  # Add CSRF imports
 from flask_restful import Resource
-from models import User, Event, Group, RSVP, Comment, GroupInvitation
+from models import User, Event, Group, RSVP, Comment, GroupInvitation, EventInvitation
 from config import app, db, api
 from datetime import datetime
 import json
 
 
 jwt = JWTManager(app)
+csrf = CSRFProtect(app)  # Initialize CSRF protection
 
 def unset_jwt():
     # Clear JWT cookies
@@ -22,6 +24,27 @@ def assign_access_refresh_tokens(user_id, url):
     set_access_cookies(resp, access_token)
     set_refresh_cookies(resp, refresh_token)
     return resp
+
+@app.after_request
+def set_csrf_token(response):
+    """
+    Dynamically set the CSRF token cookie based on the current environment.
+    """
+    csrf_token = generate_csrf()  # Generate CSRF token
+
+    # Use app.config directly instead of current_app
+    secure_cookie = app.config.get('JWT_COOKIE_SECURE', False)  # Use secure cookie setting dynamically
+    same_site_policy = app.config.get('JWT_COOKIE_SAMESITE', 'Lax')  # Use dynamic SameSite policy
+    http_only_setting = app.config.get('JWT_COOKIE_HTTPONLY', False)  # Adjust httponly dynamically
+
+    response.set_cookie(
+        'csrf_access_token',  # Cookie name
+        csrf_token,  # Token value
+        secure=secure_cookie,  # Secure flag (True in production with HTTPS)
+        httponly=http_only_setting,  # Allow or block JavaScript access
+        samesite=same_site_policy  # SameSite policy based on environment
+    )
+    return response
 
 @app.route('/')
 def serve_index():
@@ -110,7 +133,14 @@ class UserList(Resource):
         else:
             users = User.query.limit(limit).all()
 
-        return [user.to_dict() for user in users], 200
+        # Serialize users with restricted fields to prevent recursion
+        serialized_users = [
+            user.to_dict(rules=('-events', '-rsvps', '-groups', '-sent_event_invitations', '-received_event_invitations'))
+            for user in users
+        ]
+
+        return serialized_users, 200
+
 
 # User Profile Resource
 class UserProfile(Resource):
@@ -119,14 +149,14 @@ class UserProfile(Resource):
         if user_id:
             user = User.query.get_or_404(user_id)
         else:
-            current_user_id = get_jwt_identity()
+            current_user_id = int(get_jwt_identity())
             user = User.query.get_or_404(current_user_id)
 
         return {
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "groups": [{"id": group.id, "name": group.name} for group in user.groups],
+            "groups": [group.to_dict(rules=('-members',)) for group in user.groups],
             "events": [
                 {
                     "id": event.id,
@@ -141,10 +171,12 @@ class UserProfile(Resource):
             ]
         }, 200
 
+
+
 class DeleteProfile(Resource):
     @jwt_required()
     def delete(self):
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         print(f"Attempting to delete user with ID: {current_user_id}")
 
         user = User.query.get_or_404(current_user_id)
@@ -165,19 +197,36 @@ class DeleteProfile(Resource):
 # Event Resource for listing and searching events
 class EventList(Resource):
     def get(self):
-        limit = request.args.get('limit', 30)
+        limit = request.args.get('limit', 30, type=int)
         query = request.args.get('q', '')
 
-        if query:
-            events = Event.query.filter(Event.name.ilike(f"%{query}%")).limit(limit).all()
-        else:
-            events = Event.query.limit(limit).all()
+        try:
+            if query:
+                events = Event.query.filter(Event.name.ilike(f"%{query}%")).limit(limit).all()
+            else:
+                events = Event.query.limit(limit).all()
 
-        return [event.to_dict() for event in events], 200
+            # Debugging logs
+            print(f"Fetched {len(events)} events from the database.")
+            for event in events:
+                print(f"Event: {event.name}, ID: {event.id}")
+
+            # Serialize events
+            serialized_events = [
+                event.to_dict(rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event'))
+                for event in events
+            ]
+            return serialized_events, 200
+        except Exception as e:
+            print(f"Error in EventList.get: {e}")
+            return {"message": "Failed to fetch events", "details": str(e)}, 500
+
+
+
 
     @jwt_required()
     def post(self):
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         data = request.get_json()
 
         if not all(k in data for k in ("name", "date", "location", "description")):
@@ -197,13 +246,23 @@ class EventList(Resource):
         )
         db.session.add(new_event)
         db.session.commit()
-        return {"message": "Event created successfully", "event": new_event.to_dict()}, 201  
+
+        # Serialize the event with limited rules to prevent recursion
+        return {"message": "Event created successfully", "event": new_event.to_dict(rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event'))}, 201
+
 
 class EventDetail(Resource):
+    @jwt_required()
     def get(self, event_id):
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
+
         event = Event.query.get_or_404(event_id)
         rsvps = RSVP.query.filter_by(event_id=event_id).all()
-        event_data = event.to_dict()
+
+        event_data = event.to_dict(rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event'))
         event_data['rsvps'] = [
             {
                 'user_id': rsvp.user.id,
@@ -212,40 +271,188 @@ class EventDetail(Resource):
             }
             for rsvp in rsvps
         ]
+        event_data['is_user_invited'] = any(rsvp.user_id == current_user_id for rsvp in rsvps)
         return event_data, 200
+
 
     @jwt_required()
     def put(self, event_id):
-        current_user_id = get_jwt_identity()
-        event = Event.query.get_or_404(event_id)
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
 
+        event = Event.query.get_or_404(event_id)
         if event.user_id != current_user_id:
             return {"message": "You do not have permission to update this event"}, 403
 
         data = request.get_json()
+        if 'date' in data:
+            try:
+                event.date = datetime.strptime(data['date'], "%Y-%m-%dT%H:%M")
+            except ValueError:
+                return {"message": "Invalid date format, expected YYYY-MM-DDTHH:MM"}, 400
+
         event.name = data.get('name', event.name)
-        event.date = data.get('date', event.date)
         event.location = data.get('location', event.location)
         event.description = data.get('description', event.description)
 
         db.session.commit()
-        return {"message": "Event updated successfully", "event": event.to_dict()}, 200
+        return {"message": "Event updated successfully", "event": event.to_dict(rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event'))}, 200
+
 
     @jwt_required()
     def delete(self, event_id):
-        current_user_id = str(get_jwt_identity())
+        try:
+          # Get the current user's ID from the JWT
+          current_user_id = int(get_jwt_identity())  # Ensure it's an integer
+          
+          # Fetch the event by ID or return 404 if it doesn't exist
+          event = Event.query.get_or_404(event_id)
+
+          # Check if the current user is the owner of the event
+          if event.user_id != current_user_id:
+              return {"message": "You do not have permission to delete this event"}, 403
+
+          # Delete the event and commit the changes
+          db.session.delete(event)
+          db.session.commit()
+          return {"message": "Event deleted successfully"}, 200
+        except ValueError:
+          # Handle cases where get_jwt_identity() does not return a valid integer
+          return {"message": "Invalid user ID in JWT"}, 400
+        except Exception as e:
+          # General error handling
+          return {"message": "An error occurred while trying to delete the event", "details": str(e)}, 500
+
+
+
+
+class EventInvite(Resource):
+    @jwt_required()
+    def post(self, event_id):
+        current_user_id = int(get_jwt_identity())
+        data = request.get_json()
+
+        if "invited_user_id" not in data:
+            return {"message": "Missing invited_user_id"}, 400
+
         event = Event.query.get_or_404(event_id)
 
-        if str(event.user_id) != current_user_id:
-            return {"message": "You do not have permission to delete this event"}, 403
+        # Ensure only the event owner can invite users
+        if event.user_id != current_user_id:
+            return {"message": "You do not have permission to invite users to this event"}, 403
 
-        db.session.delete(event)
+        invited_user = User.query.get_or_404(data['invited_user_id'])
+
+        # Check if the user is already invited
+        existing_invitation = EventInvitation.query.filter_by(
+            event_id=event.id,
+            invitee_id=invited_user.id
+        ).first()
+        if existing_invitation:
+            return {"message": "User is already invited"}, 400
+
+        # Create a new event invitation
+        new_invitation = EventInvitation(
+            event_id=event.id,
+            inviter_id=current_user_id,
+            invitee_id=invited_user.id,
+            status="Pending"
+        )
+        db.session.add(new_invitation)
         db.session.commit()
-        return {"message": "Event deleted successfully"}, 200
+
+        # Serialize event and invited user with restricted fields to avoid recursion
+        event_data = event.to_dict(rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event'))
+        invited_user_data = invited_user.to_dict(rules=('-events', '-groups', '-rsvps', '-sent_event_invitations', '-received_event_invitations'))
+
+        return {
+            "message": "User invited successfully",
+            "invitation": {
+                "event": event_data,
+                "invitee": invited_user_data,
+                "status": new_invitation.status
+            }
+        }, 201
+
+class EventInvitations(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
+
+        try:
+            invitations = EventInvitation.query.filter_by(invitee_id=current_user_id, status='Pending').all()
+
+            # Serialize invitations with safe handling for relationships
+            serialized_invitations = []
+            for invite in invitations:
+                event_data = invite.event.to_dict(rules=('-invitations', '-rsvps.event', '-comments.event')) if invite.event else None
+                inviter_data = invite.inviter.to_dict(rules=('-events', '-groups', '-sent_event_invitations', '-received_event_invitations')) if invite.inviter else None
+
+                serialized_invitations.append({
+                    'id': invite.id,
+                    'event': event_data,
+                    'inviter': inviter_data,
+                    'status': invite.status
+                })
+
+            return serialized_invitations, 200
+
+        except Exception as e:
+            # Log the error for debugging
+            print(f"Error fetching event invitations: {e}")
+            return {"message": "Failed to fetch event invitations", "details": str(e)}, 500
+
+
+
+class DenyEventInvitation(Resource):
+    @jwt_required()
+    def put(self, invitation_id):
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
+
+        invitation = EventInvitation.query.get_or_404(invitation_id)
+        if invitation.invitee_id != current_user_id:
+            return {"message": "You do not have permission to deny this invitation"}, 403
+
+        invitation.status = 'Denied'
+        db.session.commit()
+
+        # Serialize the updated invitation with restricted fields
+        invitation_data = invitation.to_dict(rules=('-event.invitations', '-inviter.sent_event_invitations', '-invitee.received_event_invitations'))
+        return {"message": "Invitation denied", "invitation": invitation_data}, 200
+
+
+class AcceptEventInvitation(Resource):
+    @jwt_required()
+    def put(self, invitation_id):
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
+
+        invitation = EventInvitation.query.get_or_404(invitation_id)
+        if invitation.invitee_id != current_user_id:
+            return {"message": "You do not have permission to accept this invitation"}, 403
+
+        invitation.status = 'Accepted'
+        db.session.commit()
+
+        # Serialize the updated invitation with restricted fields
+        invitation_data = invitation.to_dict(rules=('-event.invitations', '-inviter.sent_event_invitations', '-invitee.received_event_invitations'))
+        return {"message": "Invitation accepted", "invitation": invitation_data}, 200
+
+
 
 class GroupList(Resource):
     def get(self):
-        limit = request.args.get('limit', 30)
+        limit = request.args.get('limit', 30, type=int)  # Ensure limit is an integer
         query = request.args.get('q', '')
 
         if query:
@@ -253,38 +460,64 @@ class GroupList(Resource):
         else:
             groups = Group.query.limit(limit).all()
 
-        return [group.to_dict() for group in groups], 200
+        # Serialize groups with restricted fields to avoid recursion
+        return [group.to_dict(rules=('-members.groups', '-invitations.group', '-members.rsvps', '-members.comments')) for group in groups], 200
 
     @jwt_required()
     def post(self):
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         data = request.get_json()
-
+    
         if not all(k in data for k in ("name", "description")):
             return {"message": "Missing required fields"}, 400
-
-        new_group = Group(name=data['name'], description=data['description'], user_id=current_user_id)
+    
+        new_group = Group(
+            name=data['name'],
+            description=data['description'],
+            user_id=current_user_id
+        )
         db.session.add(new_group)
+        db.session.flush()  # Get the group's ID before committing
+    
+        # Add the creator as a member of the group
+        creator = User.query.get_or_404(current_user_id)
+        new_group.members.append(creator)
+    
         db.session.commit()
-        return {"message": "Group created successfully", "group": new_group.to_dict()}, 201
+    
+        return {
+            "message": "Group created successfully",
+            "group": new_group.to_dict(rules=('-members', '-invitations'))
+        }, 201
+
+
 
 class GroupDetail(Resource):
     def get(self, group_id):
         group = Group.query.get_or_404(group_id)
-        return {
+
+        # Serialize group and its members with restricted fields to avoid recursion
+        group_data = {
             'id': group.id,
             'name': group.name,
             'description': group.description,
             'user_id': group.user_id,
-            'members': [{'id': user.id, 'username': user.username} for user in group.members]
-        }, 200
-    
+            'members': [
+                user.to_dict(rules=('-groups', '-rsvps', '-comments', '-sent_event_invitations', '-received_event_invitations'))
+                for user in group.members
+            ]
+        }
+        return group_data, 200
+
     @jwt_required()
     def delete(self, group_id):
-        current_user_id = str(get_jwt_identity())
-        group = Group.query.get_or_404(group_id)
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
 
-        if str(group.user_id) != current_user_id:
+        group = Group.query.get_or_404(group_id)
+        if group.user_id != current_user_id:
             return {"message": "You do not have permission to delete this group"}, 403
 
         db.session.delete(group)
@@ -292,111 +525,174 @@ class GroupDetail(Resource):
         return {"message": "Group deleted successfully"}, 200
 
 
+
+
 # Group Invitations
+# Group Invite Resource
 class GroupInvite(Resource):
     @jwt_required()
     def post(self, group_id):
-        current_user_id = get_jwt_identity()
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
+
         data = request.get_json()
+        if "invited_user_id" not in data:
+            return {"message": "Missing invited_user_id"}, 400
 
-        if not all(k in data for k in ("group_id", "invited_user_id")):
-            return {"message": "Missing required fields"}, 400
-        
-        group = Group.query.get_or_404(data["group_id"])
-
-        if str(group.user_id) != str(current_user_id):
+        group = Group.query.get_or_404(group_id)
+        if group.user_id != current_user_id:
             return {"message": "You do not have permission to invite users to this group"}, 403
 
         invited_user = User.query.get_or_404(data['invited_user_id'])
+        if invited_user in group.members:
+            return {"message": "User is already a group member"}, 400
+
+        existing_invitation = GroupInvitation.query.filter_by(
+            group_id=group.id, invited_user_id=invited_user.id
+        ).first()
+        if existing_invitation:
+            return {"message": "User is already invited"}, 400
 
         new_invitation = GroupInvitation(
             group_id=group.id,
-            user_id=current_user_id,
+            inviter_id=current_user_id,
             invited_user_id=invited_user.id,
-            status='pending'
+            status="Pending"
         )
         db.session.add(new_invitation)
         db.session.commit()
-        return {"message": "Invitation sent successfully", "invitation": new_invitation.to_dict()}, 201
+
+        invitation_data = new_invitation.to_dict(rules=('-group.invitations', '-inviter.sent_group_invitations', '-invitee.received_group_invitations'))
+        return {"message": "Group invitation sent successfully", "invitation": invitation_data}, 201
+
 
 class GroupInvitations(Resource):
     @jwt_required()
     def get(self):
-        current_user_id = get_jwt_identity()
-        invitations = GroupInvitation.query.filter_by(invited_user_id=current_user_id, status='pending').all()
-        
+        current_user_id = int(get_jwt_identity())
+        invitations = GroupInvitation.query.filter_by(invited_user_id=current_user_id, status='Pending').all()
+
+        # Serialize invitations with restricted fields to prevent recursion
         serialized_invitations = [
             {
                 'id': invite.id,
-                'group': invite.group.to_dict(),
-                'inviter': invite.inviter.to_dict()
+                'group': invite.group.to_dict(rules=('-invitations', '-members.groups')),
+                'inviter': invite.inviter.to_dict(rules=('-groups', '-sent_group_invitations', '-received_group_invitations'))
             }
             for invite in invitations
         ]
         return serialized_invitations, 200
 
+
 class DenyGroupInvitation(Resource):
     @jwt_required()
     def put(self, invitation_id):
-        current_user_id = get_jwt_identity()
-        invitation = GroupInvitation.query.get_or_404(invitation_id)
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
 
-        if str(invitation.invited_user_id) != str(current_user_id):
+        invitation = GroupInvitation.query.get_or_404(invitation_id)
+        if invitation.invited_user_id != current_user_id:
             return {"message": "You do not have permission to deny this invitation"}, 403
 
-        invitation.status = 'denied'
+        invitation.status = 'Denied'
         db.session.commit()
-        return {"message": "Invitation denied", "invitation": invitation.to_dict()}, 200
+
+        invitation_data = invitation.to_dict(rules=('-group.invitations', '-inviter.sent_group_invitations', '-invitee.received_group_invitations'))
+        return {"message": "Invitation denied", "invitation": invitation_data}, 200
+
 
 
 class AcceptGroupInvitation(Resource):
     @jwt_required()
     def put(self, invitation_id):
-        current_user_id = get_jwt_identity()
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
+
         invitation = GroupInvitation.query.get_or_404(invitation_id)
-        
-        if str(invitation.invited_user_id) != str(current_user_id):
+        if invitation.invited_user_id != current_user_id:
             return {"message": "You do not have permission to accept this invitation"}, 403
 
-        invitation.status = 'accepted'
-
+        invitation.status = 'Accepted'
         user = User.query.get_or_404(current_user_id)
         group = Group.query.get_or_404(invitation.group_id)
         user.add_group(group)
 
         db.session.commit()
-        return {"message": "Invitation accepted", "invitation": invitation.to_dict()}, 200
+        invitation_data = invitation.to_dict(rules=('-group.invitations', '-inviter.sent_group_invitations', '-invitee.received_group_invitations'))
+        return {"message": "Invitation accepted", "invitation": invitation_data}, 200
 
-# RSVP Resources
+
+
+# RSVP Resource
 class RSVPList(Resource):
     @jwt_required()
     def post(self):
-        current_user_id = get_jwt_identity()
-        data = request.get_json()
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
 
+        data = request.get_json()
         if not all(k in data for k in ("event_id", "status")):
             return {"message": "Missing required fields"}, 400
 
-        new_rsvp = RSVP(
-            user_id=current_user_id,
-            event_id=data['event_id'],
-            status=data['status']
-        )
-        db.session.add(new_rsvp)
+        event = Event.query.get_or_404(data['event_id'])
+
+        invitation = EventInvitation.query.filter_by(
+            event_id=event.id, invitee_id=current_user_id, status="Accepted"
+        ).first()
+        if not invitation:
+            return {"message": "You are not allowed to RSVP for this event"}, 403
+
+        existing_rsvp = RSVP.query.filter_by(event_id=event.id, user_id=current_user_id).first()
+        if existing_rsvp:
+            existing_rsvp.status = data['status']
+        else:
+            new_rsvp = RSVP(user_id=current_user_id, event_id=event.id, status=data['status'])
+            db.session.add(new_rsvp)
+
         db.session.commit()
-        return {"message": "RSVP created successfully", "rsvp": new_rsvp.to_dict()}, 201
+        return {"message": "RSVP updated successfully", "rsvp": existing_rsvp.to_dict() if existing_rsvp else new_rsvp.to_dict()}, 201
+
+
 
 class EventRSVPs(Resource):
+    @jwt_required()
     def get(self, event_id):
-        rsvps = RSVP.query.filter_by(event_id=event_id).all()
-        return [rsvp.to_dict() for rsvp in rsvps], 200
+        try:
+            current_user_id = int(get_jwt_identity())
+        except ValueError:
+            return {"message": "Invalid user ID in JWT"}, 400
 
-# Comment Resources
+        event = Event.query.get_or_404(event_id)
+        if event.user_id != current_user_id and not EventInvitation.query.filter_by(
+            event_id=event.id, invitee_id=current_user_id, status="Accepted"
+        ).first():
+            return {"message": "You are not authorized to view RSVPs for this event"}, 403
+
+        rsvps = RSVP.query.filter_by(event_id=event.id).all()
+        serialized_rsvps = [
+            rsvp.to_dict(rules=('-user.rsvps', '-event.rsvps')) for rsvp in rsvps
+        ]
+        return serialized_rsvps, 200
+
+
+
 class CommentList(Resource):
     @jwt_required()
     def post(self, event_id):
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         data = request.get_json()
+
+        if not data.get("content"):
+            return {"message": "Content is required"}, 400
+
         new_comment = Comment(
             content=data['content'],
             user_id=current_user_id,
@@ -404,12 +700,22 @@ class CommentList(Resource):
         )
         db.session.add(new_comment)
         db.session.commit()
-        return {"message": "Comment added successfully", "comment": new_comment.to_dict()}, 201
+
+        # Serialize comment data with restricted fields to avoid recursion
+        comment_data = new_comment.to_dict(rules=('-user.comments', '-event.comments'))
+        return {"message": "Comment added successfully", "comment": comment_data}, 201
+
 
 class EventComments(Resource):
     def get(self, event_id):
         comments = Comment.query.filter_by(event_id=event_id).all()
-        return [comment.to_dict() for comment in comments], 200
+
+        # Serialize comment data with restricted fields to avoid recursion
+        serialized_comments = [
+            comment.to_dict(rules=('-user.comments', '-event.comments')) for comment in comments
+        ]
+        return serialized_comments, 200
+
 
 # Add the resources to the API
 api.add_resource(Register, '/api/register')
@@ -419,6 +725,10 @@ api.add_resource(UserList, '/api/users')  # Updated to support search
 api.add_resource(UserProfile, '/api/profile', '/api/profile/<int:user_id>')
 api.add_resource(EventList, '/api/events')  # Updated to support search
 api.add_resource(EventDetail, '/api/events/<int:event_id>')
+api.add_resource(EventInvite, '/api/events/<int:event_id>/invite')
+api.add_resource(EventInvitations, '/api/invitations')  # For listing event invitations
+api.add_resource(DenyEventInvitation, '/api/invitations/<int:invitation_id>/deny')  # For denying an event invitation
+api.add_resource(AcceptEventInvitation, '/api/invitations/<int:invitation_id>/accept')  # For accepting an event invitation
 api.add_resource(GroupList, '/api/groups')  # Updated to support search
 api.add_resource(GroupDetail, '/api/groups/<int:group_id>')
 api.add_resource(GroupInvite, '/api/groups/<int:group_id>/invite')

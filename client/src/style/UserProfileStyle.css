@@ -114,3 +114,38 @@
     background: #c82333;
     transform: scale(1.02);
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .user-profile {
+        padding: 20px;
+    }
+
+    .profile-header h2 {
+        font-size: 24px;
+    }
+
+    .profile-email {
+        font-size: 14px;
+    }
+
+    .profile-section {
+        margin: 20px 0;
+        padding: 15px;
+    }
+
+    .profile-section h3 {
+        font-size: 20px;
+        padding-bottom: 6px;
+    }
+
+    .profile-list-item {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+    .delete-button {
+        padding: 12px;
+        font-size: 14px;
+    }
+}

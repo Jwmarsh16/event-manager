@@ -1,6 +1,6 @@
 from faker import Faker
 from config import app, db
-from models import User, Event, Group, RSVP, Comment, GroupInvitation
+from models import User, Event, Group, RSVP, Comment, GroupInvitation, EventInvitation
 import random
 
 # Initialize Faker
@@ -69,14 +69,38 @@ def seed_comments(users, events, num_comments=30):
 
 def seed_group_invitations(users, groups, num_invitations=20):
     for _ in range(num_invitations):
-        invited_user = random.choice(users)
+        inviter = random.choice(users)
+        invitee = random.choice(users)
+
+        # Avoid self-invitations
+        while invitee.id == inviter.id:
+            invitee = random.choice(users)
+
         group_invitation = GroupInvitation(
             group_id=random.choice(groups).id,
-            user_id=random.choice(users).id,
-            invited_user_id=invited_user.id,
+            inviter_id=inviter.id,
+            invited_user_id=invitee.id,
             status=random.choice(['pending', 'accepted', 'declined']),
         )
         db.session.add(group_invitation)
+    db.session.commit()
+
+def seed_event_invitations(users, events, num_invitations=20):
+    for _ in range(num_invitations):
+        inviter = random.choice(users)
+        invitee = random.choice(users)
+
+        # Avoid self-invitations
+        while invitee.id == inviter.id:
+            invitee = random.choice(users)
+
+        event_invitation = EventInvitation(
+            event_id=random.choice(events).id,
+            inviter_id=inviter.id,
+            invitee_id=invitee.id,
+            status=random.choice(['Pending', 'Accepted', 'Denied']),
+        )
+        db.session.add(event_invitation)
     db.session.commit()
 
 # Run the seed functions
@@ -92,6 +116,7 @@ def seed_all():
         seed_rsvps(users, events)
         seed_comments(users, events)
         seed_group_invitations(users, groups)
+        seed_event_invitations(users, events)
 
         print("Database seeded successfully!")
 

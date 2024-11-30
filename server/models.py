@@ -3,14 +3,45 @@ from config import db
 from sqlalchemy.orm import validates
 import re
 import bcrypt
-import secrets
 
-
+# Association tables remain the same
 group_member = db.Table('group_member',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True)
 )
 
+event_invitation = db.Table(
+    'event_invitation',
+    db.Column('event_id', db.Integer, db.ForeignKey('events.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+)
+
+class GroupInvitation(db.Model, SerializerMixin):
+    __tablename__ = 'group_invitations'
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
+    inviter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    invited_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+
+    group = db.relationship('Group', back_populates='invitations')
+    inviter = db.relationship('User', foreign_keys=[inviter_id], back_populates='sent_group_invitations')
+    invitee = db.relationship('User', foreign_keys=[invited_user_id], back_populates='received_group_invitations')
+
+    serialize_rules = (
+        '-group',  # Block entire group relationship
+        '-inviter',  # Block entire inviter relationship
+        '-invitee'   # Block entire invitee relationship
+    )
+
+
+    def accept(self):
+        self.status = "Accepted"
+        db.session.commit()
+
+    def deny(self):
+        self.status = "Denied"
+        db.session.commit()
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
@@ -23,12 +54,54 @@ class User(db.Model, SerializerMixin):
     comments = db.relationship('Comment', back_populates='user', cascade="all, delete-orphan")
     rsvps = db.relationship('RSVP', back_populates='user', cascade="all, delete-orphan")
     groups = db.relationship('Group', secondary=group_member, back_populates='members')
-    sent_invitations = db.relationship('GroupInvitation', foreign_keys='GroupInvitation.user_id', back_populates='inviter', cascade="all, delete-orphan")
-    received_invitations = db.relationship('GroupInvitation', foreign_keys='GroupInvitation.invited_user_id', back_populates='invitee', cascade="all, delete-orphan")
+    
+    sent_event_invitations = db.relationship(
+        'EventInvitation',
+        foreign_keys='EventInvitation.inviter_id',
+        back_populates='inviter',
+        cascade="all, delete-orphan"
+    )
+    sent_group_invitations = db.relationship(
+        'GroupInvitation',
+        foreign_keys='GroupInvitation.inviter_id',
+        back_populates='inviter',
+        cascade="all, delete-orphan"
+    )
+    received_event_invitations = db.relationship(
+        'EventInvitation',
+        foreign_keys='EventInvitation.invitee_id',
+        back_populates='invitee',
+        cascade="all, delete-orphan"
+    )
+    received_group_invitations = db.relationship(
+        'GroupInvitation',
+        foreign_keys='GroupInvitation.invited_user_id',
+        back_populates='invitee',
+        cascade="all, delete-orphan"
+    )
+    invited_events = db.relationship(
+        'Event',
+        secondary=event_invitation,
+        back_populates="invited_users"
+    )
 
-    serialize_rules = ('-password_hash', '-events', '-sent_invitations', '-received_invitations', '-comments', '-rsvps', '-groups')
+    serialize_rules = (
+        '-password_hash',
+        '-events',
+        '-comments',
+        '-rsvps',
+        '-groups',
+        '-sent_group_invitations',  # Block entire relation
+        '-received_group_invitations',  # Block entire relation
+        '-sent_event_invitations',  # Block entire relation
+        '-received_event_invitations',  # Block entire relation
+        '-invited_events',
+        '-invited_events'
+    )
 
 
+
+    # Validation methods remain the same
     @validates('username')
     def validate_username(self, key, username):
         if not username:
@@ -72,12 +145,6 @@ class User(db.Model, SerializerMixin):
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
-    
-    def add_group(self, group):
-        if group not in self.groups:
-            self.groups.append(group)
-            db.session.commit()
-    
 
 class Group(db.Model, SerializerMixin):
     __tablename__ = 'groups'
@@ -89,8 +156,7 @@ class Group(db.Model, SerializerMixin):
     members = db.relationship('User', secondary=group_member, back_populates='groups')
     invitations = db.relationship('GroupInvitation', back_populates='group', cascade="all, delete-orphan")
 
-    serialize_rules = ('-invitations', 'members.username')
-
+    serialize_rules = ('-members.groups', '-invitations.group')
 
 class Event(db.Model, SerializerMixin):
     __tablename__ = 'events'
@@ -104,23 +170,39 @@ class Event(db.Model, SerializerMixin):
     user = db.relationship('User', back_populates='events')
     comments = db.relationship('Comment', back_populates='event', cascade="all, delete-orphan")
     rsvps = db.relationship('RSVP', back_populates='event', cascade="all, delete-orphan")
+    invited_users = db.relationship(
+        'User',
+        secondary=event_invitation,
+        back_populates="invited_events"
+    )
+    invitations = db.relationship('EventInvitation', back_populates='event', cascade="all, delete-orphan")
 
-    serialize_rules = ('-comments', '-rsvps', '-user')
+    serialize_rules = (
+        '-user.events',
+        '-comments.event',
+        '-rsvps.event',
+        '-invitations',  # Block entire invitations relationship
+        '-invited_users.events',
+        '-invited_users.invited_events'
+    )
 
-
-class GroupInvitation(db.Model, SerializerMixin):
-    __tablename__ = 'group_invitations'
+class EventInvitation(db.Model, SerializerMixin):
+    __tablename__ = 'event_invitations'
     id = db.Column(db.Integer, primary_key=True)
-    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    invited_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    status = db.Column(db.String(20), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    inviter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    invitee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="Pending")
 
-    inviter = db.relationship('User', foreign_keys=[user_id], back_populates='sent_invitations')
-    invitee = db.relationship('User', foreign_keys=[invited_user_id], back_populates='received_invitations')
-    group = db.relationship('Group', back_populates='invitations')
+    event = db.relationship('Event', back_populates='invitations')
+    inviter = db.relationship('User', foreign_keys=[inviter_id], back_populates='sent_event_invitations')
+    invitee = db.relationship('User', foreign_keys=[invitee_id], back_populates='received_event_invitations')
 
-    serialize_rules = ('-inviter', '-invitee', '-group')
+    serialize_rules = (
+        '-event',  # Block entire event relationship
+        '-inviter',  # Block entire inviter relationship
+        '-invitee'   # Block entire invitee relationship
+    )
 
 
 class RSVP(db.Model, SerializerMixin):
@@ -133,8 +215,7 @@ class RSVP(db.Model, SerializerMixin):
     user = db.relationship('User', back_populates='rsvps')
     event = db.relationship('Event', back_populates='rsvps')
 
-    serialize_rules = ('-user', '-event')
-
+    serialize_rules = ('-user.rsvps', '-event.rsvps')
 
 class Comment(db.Model, SerializerMixin):
     __tablename__ = 'comments'
@@ -146,4 +227,4 @@ class Comment(db.Model, SerializerMixin):
     user = db.relationship('User', back_populates='comments')
     event = db.relationship('Event', back_populates='comments')
 
-    serialize_rules = ('-user', '-event')
+    serialize_rules = ('-user.comments', '-event.comments')

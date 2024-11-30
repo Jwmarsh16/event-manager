@@ -1,0 +1,89 @@
+/* Container for Login Page */
+.login-container {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100vh; /* Full viewport height */
+    background-color: #f5f7fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Login Form Wrapper */
+.login-form-wrapper {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 400px; /* Restrict width for large screens */
+}
+
+/* Login Title */
+.login-title {
+    font-size: 1.8rem;
+    color: #107880;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Login Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Spacing between input fields */
+}
+
+/* Login Input */
+.login-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.login-input:focus {
+    border-color: #107880; /* Highlight input on focus */
+}
+
+/* Login Button */
+.login-button {
+    padding: 12px 20px;
+    background-color: #107880;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.login-button:hover {
+    background-color: #0b5c66;
+    transform: scale(1.05); /* Slight enlarge on hover */
+}
+
+/* Register Text */
+.login-register-text {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.login-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}

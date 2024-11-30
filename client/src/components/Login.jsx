@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { login } from '../redux/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
+import '../style/LoginStyle.css'; // Import the new CSS file
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     const response = await dispatch(login({ username, password }));
-    
+
     if (response.meta.requestStatus === 'fulfilled') {
       console.log('Login successful');
       navigate('/'); // Redirect to the home page after successful login
@@ -22,24 +23,30 @@ function Login() {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">Login</button>
-      </form>
-      <p>Don't have an account? <Link to="/register">Register here</Link></p> {/* Link to the Register page */}
+    <div className="login-container">
+      <div className="login-form-wrapper">
+        <h2 className="login-title">Login</h2>
+        <form className="login-form" onSubmit={handleLogin}>
+          <input
+            type="text"
+            className="login-input"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            type="password"
+            className="login-input"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button type="submit" className="login-button">Login</button>
+        </form>
+        <p className="login-register-text">
+          Don't have an account? <Link to="/register" className="login-link">Register here</Link>
+        </p>
+      </div>
     </div>
   );
 }

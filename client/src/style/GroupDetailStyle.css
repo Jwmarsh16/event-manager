@@ -1,91 +1,56 @@
-/* Main Container Styling */
-.group-detail-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 40px;
-    background-color: #f0f4f8;
+/* General Page Styling */
+.group-detail-page {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
 }
 
-/* Group Card */
-.group-card {
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-    padding: 30px;
-    width: 100%;
-    max-width: 750px;
-    transition: box-shadow 0.3s ease;
-}
-
-.group-card:hover {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-/* Header with Title and Delete Button */
-.group-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-}
-
-.group-title {
-    font-size: 2.2rem;
-    color: #0074d9;
-    font-weight: bold;
-    margin: 0;
-}
-
-/* Delete Button */
-.delete-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background-color: #ff6b6b;
-    color: #ffffff;
-    padding: 10px 20px;
+/* Hero Section */
+.group-hero {
+    text-align: center;
+    background: linear-gradient(135deg, #107880, #00bcd4);
+    color: white;
+    padding: 40px 20px;
     border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.3s;
-    width: auto;
-    height: auto;
-    max-width: 150px; /* Set a max-width to prevent it from expanding too much */
-    min-width: 130px; /* Set a min-width to align with the invite button */
-    margin-left: auto; /* Align the delete button to the right in the group header */
+    margin-bottom: 30px;
 }
 
-.delete-button:hover {
-    background-color: #ff3b3b;
+.group-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+.group-hero p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
 
-
-/* Group Description */
-.group-description {
+/* Group Stats */
+.group-stats {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-around;
     font-size: 1.1rem;
     color: #333;
-    margin: 20px 0;
-    line-height: 1.6;
-    padding: 10px;
-    background-color: #f9fafc;
-    border-left: 4px solid #0074d9;
-    border-radius: 8px;
 }
 
 /* Members Section */
 .members-section {
-    margin-top: 30px;
+    margin-bottom: 30px;
 }
 
 .members-title {
-    font-size: 1.6rem;
-    color: #0074d9;
-    margin-bottom: 15px;
+    font-size: 1.8rem;
+    color: #107880;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 .members-list {
@@ -93,12 +58,13 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 15px;
+    justify-content: center;
 }
 
 .member-item {
     background-color: #e9f2fb;
-    padding: 10px 15px;
+    padding: 10px 20px;
     border-radius: 10px;
     color: #004085;
     font-weight: 500;
@@ -112,38 +78,70 @@
 
 /* Invite Button */
 .invite-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    display: block;
+    align-self: center;
     background-color: #007bff;
-    color: #ffffff;
+    color: white;
     padding: 12px 24px;
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 600;
     text-decoration: none;
     margin-top: 30px;
-    transition: background-color 0.3s;
-    justify-content: center;
-    max-width: 200px;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    max-width: 300px;
+    margin: 20px auto; /* Center horizontally */
 }
 
 .invite-button:hover {
     background-color: #005bb5;
 }
 
-/* Loading and Error Messages */
-.loading-message,
-.error-message {
-    text-align: center;
-    font-size: 1.2rem;
+/* Delete Button */
+.delete-button {
+    display: block;
+    align-self: flex-start;
+    background-color: #ff6b6b;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
     margin-top: 20px;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    max-width: 300px;
+    margin: 40px auto 0; /* Move further down */
 }
 
-.loading-message {
-    color: #007bff;
+.delete-button:hover {
+    background-color: #ff3b3b;
 }
 
-.error-message {
-    color: #dc3545;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .group-hero h1 {
+        font-size: 2rem;
+    }
+
+    .group-hero p {
+        font-size: 1rem;
+    }
+
+    .group-stats {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .members-title {
+        font-size: 1.5rem;
+    }
+
+    .invite-button,
+    .delete-button {
+        width: 100%; /* Full-width on mobile */
+        max-width: 300px;
+    }
 }

@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
-// Helper function to handle fetch requests with credentials and CSRF token
+// Helper function for fetch requests with credentials and CSRF token
 const fetchWithCredentials = (url, options = {}) => {
-  const csrfToken = Cookies.get('csrf_access_token');
+  const csrfToken = Cookies.get('csrf_access_token') || ''; // Gracefully handle missing CSRF token
   return fetch(url, {
     ...options,
     credentials: 'include', // Ensure cookies are sent with the request
@@ -15,7 +15,6 @@ const fetchWithCredentials = (url, options = {}) => {
   });
 };
 
-
 // Thunk for fetching RSVPs for a specific event
 export const fetchRSVPs = createAsyncThunk('rsvps/fetchRSVPs', async (eventId, thunkAPI) => {
   try {
@@ -24,8 +23,7 @@ export const fetchRSVPs = createAsyncThunk('rsvps/fetchRSVPs', async (eventId, t
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to fetch RSVPs');
     }
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     return thunkAPI.rejectWithValue(error.message || 'Failed to fetch RSVPs');
   }
@@ -42,28 +40,48 @@ export const createRSVP = createAsyncThunk('rsvps/createRSVP', async (rsvpData, 
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to submit RSVP');
     }
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     return thunkAPI.rejectWithValue(error.message || 'Failed to submit RSVP');
   }
 });
 
+// Thunk for updating an RSVP
+export const updateRSVP = createAsyncThunk('rsvps/updateRSVP', async (rsvpData, thunkAPI) => {
+  try {
+    const response = await fetchWithCredentials('/api/rsvps', {
+      method: 'PUT',
+      body: JSON.stringify(rsvpData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update RSVP');
+    }
+    return await response.json();
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.message || 'Failed to update RSVP');
+  }
+});
+
+// RSVP slice
 const rsvpSlice = createSlice({
   name: 'rsvps',
   initialState: {
-    rsvps: [],
-    loading: false,
-    error: null,
+    rsvps: [], // List of RSVPs for the current event
+    loading: false, // Loading state for RSVP-related actions
+    error: null, // Error state
+    successMessage: null, // Store success messages
   },
   reducers: {
     resetRsvpState: (state) => {
       state.loading = false;
       state.error = null;
+      state.successMessage = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Fetch RSVPs
       .addCase(fetchRSVPs.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -76,17 +94,40 @@ const rsvpSlice = createSlice({
         state.loading = false;
         state.error = action.payload || 'Failed to fetch RSVPs';
       })
+
+      // Create RSVP
       .addCase(createRSVP.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.successMessage = null;
       })
       .addCase(createRSVP.fulfilled, (state, action) => {
         state.loading = false;
         state.rsvps.push(action.payload);
+        state.successMessage = 'RSVP successfully created';
       })
       .addCase(createRSVP.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to submit RSVP';
+      })
+
+      // Update RSVP
+      .addCase(updateRSVP.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(updateRSVP.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.rsvps.findIndex((rsvp) => rsvp.id === action.payload.id);
+        if (index !== -1) {
+          state.rsvps[index] = action.payload;
+        }
+        state.successMessage = 'RSVP successfully updated';
+      })
+      .addCase(updateRSVP.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to update RSVP';
       });
   },
 });

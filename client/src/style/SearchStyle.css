@@ -1,0 +1,71 @@
+/* Search Container */
+.search-container {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    margin: 20px auto; /* Add spacing around the search bar */
+    max-width: 90%; /* Adjust for smaller screens */
+}
+
+/* Search Form */
+.search-form {
+    display: flex;
+    flex-wrap: nowrap; /* Default to single row */
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+    overflow: hidden; /* Ensure rounded corners work with child elements */
+    width: 100%; /* Make it responsive */
+    max-width: 600px; /* Limit the maximum width */
+    transition: flex-direction 0.3s ease; /* Smooth transition for stacking */
+}
+
+/* Search Input */
+.search-input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+    font-size: 1em;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+.search-input::placeholder {
+    color: #aaa;
+}
+
+/* Search Button */
+.search-button {
+    padding: 10px 20px;
+    background-color: #107880;
+    color: #fff;
+    border: none;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.search-button:hover {
+    background-color: #0b5c66;
+    transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .search-form {
+        flex-direction: column; /* Stack input and button vertically */
+        align-items: stretch; /* Ensure elements stretch to fit the container */
+    }
+
+    .search-input {
+        font-size: 0.9em;
+        padding: 10px 15px; /* Adjust padding for smaller screens */
+        margin-bottom: 10px; /* Add spacing between input and button */
+    }
+
+    .search-button {
+        padding: 10px; /* Reduce padding for smaller screens */
+        font-size: 0.9em; /* Adjust font size */
+    }
+}

@@ -1,0 +1,89 @@
+/* Container for Register Page */
+.register-container {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100vh; /* Full viewport height */
+    background-color: #f5f7fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Register Form Wrapper */
+.register-form-wrapper {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 450px; /* Restrict width for large screens */
+}
+
+/* Register Title */
+.register-title {
+    font-size: 1.8rem;
+    color: #107880;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Register Form */
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Spacing between input fields */
+}
+
+/* Register Input */
+.register-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.register-input:focus {
+    border-color: #107880; /* Highlight input on focus */
+}
+
+/* Register Button */
+.register-button {
+    padding: 12px 20px;
+    background-color: #107880;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.register-button:hover {
+    background-color: #0b5c66;
+    transform: scale(1.05); /* Slight enlarge on hover */
+}
+
+.register-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Error and Info Text */
+.error-text {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.info-text {
+    color: #007bff;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
