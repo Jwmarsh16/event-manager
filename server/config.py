@@ -20,31 +20,28 @@ naming_convention = {
 
 metadata = MetaData(naming_convention=naming_convention)
 
-if os.getenv("FLASK_ENV", "development") == "production":
-    app = Flask(
-        __name__,
-        static_url_path='',
-        static_folder='../client/dist',  # Adjust if your build files are elsewhere
-        template_folder='../client/dist'  # Adjust if your HTML is elsewhere
-    )
-else:
-    app = Flask(__name__)  # Use a simpler setup for development
+#app = Flask(__name__)
 
+app = Flask(
+    __name__,
+    static_url_path='',
+    static_folder='../client/dist',
+    template_folder='../client/dist'
+)
 
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# JWT Configuration
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-app.config['JWT_COOKIE_SECURE'] = os.getenv('JWT_COOKIE_SECURE', 'False').lower() == 'true'
-app.config['JWT_COOKIE_SAMESITE'] = os.getenv('JWT_COOKIE_SAMESITE', 'Lax')
-app.config['JWT_COOKIE_HTTPONLY'] = os.getenv('JWT_COOKIE_HTTPONLY', 'False').lower() == 'true'
-app.config['JWT_ACCESS_COOKIE_PATH'] = os.getenv('JWT_ACCESS_COOKIE_PATH', '/')
-app.config['JWT_REFRESH_COOKIE_PATH'] = os.getenv('JWT_REFRESH_COOKIE_PATH', '/token/refresh')
-app.config['JWT_COOKIE_CSRF_PROTECT'] = os.getenv('JWT_COOKIE_CSRF_PROTECT', 'False').lower() == 'true'
-app.config['JWT_CSRF_CHECK_FORM'] = os.getenv('JWT_CSRF_CHECK_FORM', 'False').lower() == 'true'
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['JWT_COOKIE_SECURE'] = True  # Set to True in production and development when using HTTPS
+app.config['JWT_COOKIE_SAMESITE'] = 'None' # Set to 'None' in production
+app.config['JWT_COOKIE_HTTPONLY'] = True # Set to True in production
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/' 
+app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'
+app.config['JWT_COOKIE_CSRF_PROTECT'] = True # Set to True in production
+app.config['JWT_CSRF_CHECK_FORM'] = True # Set to True in production
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Updated to a more secure key
 
 
 db = SQLAlchemy(metadata=metadata)
@@ -63,9 +60,4 @@ api = Api(app)
 #Make sure the CORS origins match your frontend URL
 
 #Production
-#CORS(app, supports_credentials=True, origins=["https://event-manager-dtae.onrender.com"])
-
-if os.getenv("FLASK_ENV", "development") == "production":
-    CORS(app, supports_credentials=True, origins=["https://event-manager-dtae.onrender.com"])
-else:
-    CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
+CORS(app, supports_credentials=True, origins=["https://event-manager-dtae.onrender.com"])
