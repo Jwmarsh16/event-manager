@@ -12,14 +12,19 @@ jwt = JWTManager(app)
 csrf = CSRFProtect(app)  # Initialize CSRF protection
 
 def unset_jwt():
-    # Clear JWT cookies
+    """
+    Clear JWT cookies and redirect to the login page.
+    """
     resp = make_response(redirect('/login', 302))
     unset_jwt_cookies(resp)
     return resp
 
 def assign_access_refresh_tokens(user_id, url):
-    access_token = create_access_token(identity=str(user_id))
-    refresh_token = create_refresh_token(identity=str(user_id))
+    """
+    Generate access and refresh tokens, set them as cookies, and redirect to a specified URL.
+    """
+    access_token = create_access_token(identity=str(user_id))  # Ensure identity is a string
+    refresh_token = create_refresh_token(identity=str(user_id))  # Ensure identity is a string
     resp = make_response(redirect(url, 302))
     set_access_cookies(resp, access_token)
     set_refresh_cookies(resp, refresh_token)
@@ -27,80 +32,103 @@ def assign_access_refresh_tokens(user_id, url):
 
 @app.after_request
 def set_csrf_token(response):
+    """
+    Dynamically set the CSRF token cookie based on the current environment.
+    """
     csrf_token = generate_csrf()  # Generate CSRF token
     response.set_cookie(
-        'csrf_access_token',
-        csrf_token,
+        'csrf_access_token',  # Cookie name
+        csrf_token,  # Token value
         secure=True,  # Only send cookies over HTTPS
         httponly=False,  # CSRF token must be accessible via JavaScript
-        samesite='None'  # Required for cross-origin requests
+        samesite='None',  # Required for cross-origin requests
     )
     return response
 
 @app.route('/')
 def serve_index():
+    """
+    Serve the static index.html file for the root route.
+    """
     return app.send_static_file('index.html')
-
-
 
 # Register Resource
 class Register(Resource):
     def post(self):
-        # Validate CSRF Token
-        csrf_token = request.headers.get('X-CSRF-Token')
         try:
-            validate_csrf(csrf_token)
+            # Parse incoming JSON data
+            data = request.get_json()
+
+            # Validate required fields
+            if not all(k in data for k in ("username", "email", "password")):
+                return {"message": "Missing required fields"}, 400
+
+            # Check for existing username or email
+            if User.query.filter_by(username=data['username']).first():
+                return {"message": "Username already exists"}, 400
+            if User.query.filter_by(email=data['email']).first():
+                return {"message": "Email already registered"}, 400
+
+            # Create a new user
+            new_user = User(username=data['username'], email=data['email'])
+            new_user.password = data['password']  # Assuming password hashing is handled in the model
+            db.session.add(new_user)
+            db.session.commit()
+
+            # Generate JWT tokens
+            access_token = create_access_token(identity=str(new_user.id))  # Convert to string
+            refresh_token = create_refresh_token(identity=str(new_user.id))  # Convert to string
+
+            # Prepare response
+            response = make_response({"message": "User registered successfully"})
+            set_access_cookies(response, access_token)
+            set_refresh_cookies(response, refresh_token)
+
+            response.status_code = 201
+            return response
+        except ValueError as e:
+            return {"message": str(e)}, 400
         except Exception as e:
-            return {"message": f"Invalid CSRF token: {str(e)}"}, 400
+            app.logger.error(f"Unexpected error: {e}")
+            return {"message": "An internal server error occurred"}, 500
 
-        data = request.get_json()
-
-        if User.query.filter_by(username=data['username']).first():
-            return {"message": "Username already exists"}, 400
-        if User.query.filter_by(email=data['email']).first():
-            return {"message": "Email already registered"}, 400
-        if not all(k in data for k in ("username", "email", "password")):
-            return {"message": "Missing required fields"}, 400
-
-        new_user = User(username=data['username'], email=data['email'])
-        new_user.password = data['password']
-        db.session.add(new_user)
-        db.session.commit()
-
-        access_token = create_access_token(identity=new_user.id)
-        refresh_token = create_refresh_token(identity=new_user.id)
-
-        response = make_response({"message": "User registered successfully"})
-        set_access_cookies(response, access_token)
-        set_refresh_cookies(response, refresh_token)
-
-        response.status_code = 201
-        return response
-
-
+# Login Resource
 class Login(Resource):
     def get(self):
+        """
+        Return a simple message for the login route.
+        """
         return {"message": "Please log in."}, 200
-    
+
     def post(self):
-        data = request.get_json()
+        try:
+            # Parse incoming JSON data
+            data = request.get_json()
 
-        if not all(k in data for k in ("username", "password")):
-            return {"message": "Missing required fields"}, 400
+            # Validate required fields
+            if not all(k in data for k in ("username", "password")):
+                return {"message": "Missing required fields"}, 400
 
-        user = User.query.filter_by(username=data['username']).first()
-        if user is None or not user.check_password(data['password']):
-            return {"message": "Invalid username or password"}, 401
+            # Check user credentials
+            user = User.query.filter_by(username=data['username']).first()
+            if user is None or not user.check_password(data['password']):
+                return {"message": "Invalid username or password"}, 401
 
-        response = assign_access_refresh_tokens(user_id=user.id, url="/")
+            # Generate tokens and prepare response
+            access_token = create_access_token(identity=str(user.id))  # Convert to string
+            refresh_token = create_refresh_token(identity=str(user.id))  # Convert to string
+            response = make_response({
+                "user": {"id": user.id},
+                "message": "Login successful",
+            })
+            set_access_cookies(response, access_token)
+            set_refresh_cookies(response, refresh_token)
 
-
-        response_data = {"user": {"id": user.id}, "message": "Login successful"}
-        response.set_data(json.dumps(response_data))
-        response.mimetype = 'application/json'
-        response.status_code = 200
-
-        return response
+            response.status_code = 200
+            return response
+        except Exception as e:
+            app.logger.error(f"Unexpected error during login: {e}")
+            return {"message": "An internal server error occurred"}, 500
 
 class Logout(Resource):
     @jwt_required()
