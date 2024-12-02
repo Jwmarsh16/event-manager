@@ -29,20 +29,25 @@ app = Flask(
     template_folder='../client/dist'
 )
 
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Secure Application Secrets
+app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Make sure this is set in your environment
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")  # Production database URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Keep this False to save resources
 
+# JWT Configuration
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-app.config['JWT_COOKIE_SECURE'] = True  # Set to True in production and development when using HTTPS
-app.config['JWT_COOKIE_SAMESITE'] = 'None' # Set to 'None' in production
-app.config['JWT_COOKIE_HTTPONLY'] = True # Set to True in production
-app.config['JWT_ACCESS_COOKIE_PATH'] = '/' 
-app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'
-app.config['JWT_COOKIE_CSRF_PROTECT'] = True # Set to True in production
-app.config['JWT_CSRF_CHECK_FORM'] = True # Set to True in production
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Updated to a more secure key
+app.config['JWT_COOKIE_SECURE'] = True  # Enforces secure cookies over HTTPS
+app.config['JWT_COOKIE_SAMESITE'] = 'None'  # Required for cross-site cookie sharing
+app.config['JWT_COOKIE_HTTPONLY'] = True  # Prevents JavaScript from accessing cookies
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/'  # Path for access tokens
+app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'  # Path for refresh tokens
+app.config['JWT_COOKIE_CSRF_PROTECT'] = True  # Enable CSRF protection in production
+app.config['JWT_CSRF_CHECK_FORM'] = True  # Ensure forms are checked for CSRF tokens
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Secure JWT key from environment
 
+# Optional: CSRF Protection for Flask-WTF
+# Uncomment if using Flask-WTF for forms
+app.config['WTF_CSRF_ENABLED'] = True
 
 db = SQLAlchemy(metadata=metadata)
 
