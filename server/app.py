@@ -32,18 +32,18 @@ def assign_access_refresh_tokens(user_id, url):
 
 @app.after_request
 def set_csrf_token(response):
-    if 'csrf_access_token' not in request.cookies:
-        # Only generate a new CSRF token if one doesn't already exist
-        csrf_token = generate_csrf()
-        response.set_cookie(
-            'csrf_access_token',
-            csrf_token,
-            secure=True,  # Ensure cookies are sent over HTTPS
-            httponly=False,  # Allow JavaScript access
-            samesite='None',  # Required for cross-origin requests
-        )
+    """
+    Dynamically set the CSRF token cookie based on the current environment.
+    """
+    csrf_token = generate_csrf()  # Generate CSRF token
+    response.set_cookie(
+        'csrf_access_token',  # Cookie name
+        csrf_token,  # Token value
+        secure=True,  # Only send cookies over HTTPS
+        httponly=False,  # CSRF token must be accessible via JavaScript
+        samesite='None',  # Required for cross-origin requests
+    )
     return response
-
 
 @app.route('/')
 def serve_index():
