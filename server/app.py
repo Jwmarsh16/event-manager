@@ -8,8 +8,8 @@ from datetime import datetime
 import json
 
 
+# Initialize JWT Manager
 jwt = JWTManager(app)
-csrf = CSRFProtect(app)  # Initialize CSRF protection
 
 def unset_jwt():
     """
@@ -31,13 +31,13 @@ def assign_access_refresh_tokens(user_id, url):
     return resp
 
 
-
 @app.route('/')
 def serve_index():
     """
     Serve the static index.html file for the root route.
     """
     return app.send_static_file('index.html')
+
 
 # Register Resource
 class Register(Resource):
@@ -63,8 +63,8 @@ class Register(Resource):
             db.session.commit()
 
             # Generate JWT tokens
-            access_token = create_access_token(identity=str(new_user.id))  # Convert to string
-            refresh_token = create_refresh_token(identity=str(new_user.id))  # Convert to string
+            access_token = create_access_token(identity=str(new_user.id))
+            refresh_token = create_refresh_token(identity=str(new_user.id))
 
             # Prepare response
             response = make_response({"message": "User registered successfully"})
@@ -73,20 +73,13 @@ class Register(Resource):
 
             response.status_code = 201
             return response
-        except ValueError as e:
-            return {"message": str(e)}, 400
         except Exception as e:
             app.logger.error(f"Unexpected error: {e}")
             return {"message": "An internal server error occurred"}, 500
 
+
 # Login Resource
 class Login(Resource):
-    def get(self):
-        """
-        Return a simple message for the login route.
-        """
-        return {"message": "Please log in."}, 200
-
     def post(self):
         try:
             # Parse incoming JSON data
@@ -101,9 +94,11 @@ class Login(Resource):
             if user is None or not user.check_password(data['password']):
                 return {"message": "Invalid username or password"}, 401
 
-            # Generate tokens and prepare response
-            access_token = create_access_token(identity=str(user.id))  # Convert to string
-            refresh_token = create_refresh_token(identity=str(user.id))  # Convert to string
+            # Generate JWT tokens
+            access_token = create_access_token(identity=str(user.id))
+            refresh_token = create_refresh_token(identity=str(user.id))
+
+            # Prepare response
             response = make_response({
                 "user": {"id": user.id},
                 "message": "Login successful",
@@ -117,9 +112,14 @@ class Login(Resource):
             app.logger.error(f"Unexpected error during login: {e}")
             return {"message": "An internal server error occurred"}, 500
 
+
+# Logout Resource
 class Logout(Resource):
     @jwt_required()
     def post(self):
+        """
+        Logout the user by clearing JWT cookies.
+        """
         return unset_jwt()
 
 
