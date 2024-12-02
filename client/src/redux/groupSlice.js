@@ -3,10 +3,11 @@ import Cookies from 'js-cookie';
 
 // Helper function for fetch requests with credentials and CSRF token
 const fetchWithCredentials = (url, options = {}) => {
-  const csrfToken = Cookies.get('csrf_access_token') || ''; // Handle missing cookies gracefully
+  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve the latest CSRF token
+  console.log('CSRF Token Sent:', csrfToken); // Debugging: Log the token being sent
   return fetch(url, {
     ...options,
-    credentials: 'include', // Ensure cookies are sent with the request
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-TOKEN': csrfToken,
@@ -14,6 +15,7 @@ const fetchWithCredentials = (url, options = {}) => {
     },
   });
 };
+
 
 // Thunks for group management
 export const fetchGroups = createAsyncThunk('groups/fetchGroups', async (_, thunkAPI) => {
