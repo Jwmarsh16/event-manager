@@ -1,6 +1,6 @@
 from flask import request, make_response, jsonify, redirect, render_template
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, set_access_cookies, unset_jwt_cookies, create_refresh_token, set_refresh_cookies
-from flask_wtf.csrf import CSRFProtect, generate_csrf  # Add CSRF imports
+from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf  # Add CSRF imports
 from flask_restful import Resource
 from models import User, Event, Group, RSVP, Comment, GroupInvitation, EventInvitation
 from config import app, db, api
@@ -27,22 +27,13 @@ def assign_access_refresh_tokens(user_id, url):
 
 @app.after_request
 def set_csrf_token(response):
-    """
-    Dynamically set the CSRF token cookie based on the current environment.
-    """
     csrf_token = generate_csrf()  # Generate CSRF token
-
-    # Use app.config directly instead of current_app
-    secure_cookie = app.config.get('JWT_COOKIE_SECURE', False)  # Use secure cookie setting dynamically
-    same_site_policy = app.config.get('JWT_COOKIE_SAMESITE', 'Lax')  # Use dynamic SameSite policy
-    http_only_setting = app.config.get('JWT_COOKIE_HTTPONLY', False)  # Adjust httponly dynamically
-
     response.set_cookie(
-        'csrf_access_token',  # Cookie name
-        csrf_token,  # Token value
-        secure=secure_cookie,  # Secure flag (True in production with HTTPS)
-        httponly=http_only_setting,  # Allow or block JavaScript access
-        samesite=same_site_policy  # SameSite policy based on environment
+        'csrf_access_token',
+        csrf_token,
+        secure=True,  # Only send cookies over HTTPS
+        httponly=False,  # CSRF token must be accessible via JavaScript
+        samesite='None'  # Required for cross-origin requests
     )
     return response
 
@@ -55,41 +46,35 @@ def serve_index():
 # Register Resource
 class Register(Resource):
     def post(self):
+        # Validate CSRF Token
+        csrf_token = request.headers.get('X-CSRF-Token')
+        try:
+            validate_csrf(csrf_token)
+        except Exception as e:
+            return {"message": f"Invalid CSRF token: {str(e)}"}, 400
+
         data = request.get_json()
 
-        # Check for existing username or email
-        if User.query.filter_by(username=data['username']).first() is not None:
+        if User.query.filter_by(username=data['username']).first():
             return {"message": "Username already exists"}, 400
-        if User.query.filter_by(email=data['email']).first() is not None:
+        if User.query.filter_by(email=data['email']).first():
             return {"message": "Email already registered"}, 400
-
-        # Ensure required fields are present
         if not all(k in data for k in ("username", "email", "password")):
             return {"message": "Missing required fields"}, 400
 
-        try:
-            new_user = User(username=data['username'], email=data['email'])
-            new_user.password = data['password']
-            db.session.add(new_user)
-            db.session.commit()
-        except ValueError as e:
-            return {"message": str(e)}, 400
+        new_user = User(username=data['username'], email=data['email'])
+        new_user.password = data['password']
+        db.session.add(new_user)
+        db.session.commit()
 
-        # Generate tokens
         access_token = create_access_token(identity=new_user.id)
         refresh_token = create_refresh_token(identity=new_user.id)
 
-        # Prepare response data
-        response_data = {"message": "User registered successfully", "user": new_user.to_dict()}
-        response = make_response(jsonify(response_data))
-        
-        # Set JWT cookies
+        response = make_response({"message": "User registered successfully"})
         set_access_cookies(response, access_token)
         set_refresh_cookies(response, refresh_token)
-        
-        # Set the status code directly on the response object
-        response.status_code = 201
 
+        response.status_code = 201
         return response
 
 
@@ -467,10 +452,10 @@ class GroupList(Resource):
     def post(self):
         current_user_id = int(get_jwt_identity())
         data = request.get_json()
-    
+
         if not all(k in data for k in ("name", "description")):
             return {"message": "Missing required fields"}, 400
-    
+
         new_group = Group(
             name=data['name'],
             description=data['description'],
@@ -478,13 +463,13 @@ class GroupList(Resource):
         )
         db.session.add(new_group)
         db.session.flush()  # Get the group's ID before committing
-    
+
         # Add the creator as a member of the group
         creator = User.query.get_or_404(current_user_id)
         new_group.members.append(creator)
-    
+
         db.session.commit()
-    
+
         return {
             "message": "Group created successfully",
             "group": new_group.to_dict(rules=('-members', '-invitations'))
