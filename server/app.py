@@ -30,26 +30,6 @@ def assign_access_refresh_tokens(user_id, url):
     set_refresh_cookies(resp, refresh_token)
     return resp
 
-@app.after_request
-def set_csrf_token(response):
-    if request.endpoint in ['login', 'logout', 'refresh_token']:
-        csrf_token = generate_csrf()  # Generate CSRF token only when necessary
-        response.set_cookie(
-            'csrf_access_token',
-            csrf_token,
-            secure=True,
-            httponly=False,
-            samesite='None',
-        )
-    return response
-
-@app.before_request
-def log_csrf_tokens():
-    csrf_header = request.headers.get('X-CSRF-TOKEN')
-    csrf_cookie = request.cookies.get('csrf_access_token')
-    app.logger.info(f"CSRF Token (Header): {csrf_header}")
-    app.logger.info(f"CSRF Token (Cookie): {csrf_cookie}")
-
 
 
 @app.route('/')
