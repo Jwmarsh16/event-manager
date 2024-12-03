@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchEventById, deleteEvent } from '../redux/eventSlice'; // Fetch the event
-import { fetchUsers } from '../redux/userSlice'; // Fetch users
-import { inviteUserToEvent } from '../redux/inviteSlice'; // Invite users
-import { createRSVP } from '../redux/rsvpSlice'; // RSVP actions
+import { fetchEventById, deleteEvent } from '../redux/eventSlice';
+import { fetchUsers } from '../redux/userSlice';
+import { inviteUserToEvent } from '../redux/inviteSlice';
+import { createRSVP } from '../redux/rsvpSlice';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../style/EventDetailStyle.css';
@@ -14,37 +14,42 @@ function EventDetail() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState(''); // Search query for user search
-  const [filteredUsers, setFilteredUsers] = useState([]); // Filtered user list
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [showInviteInput, setShowInviteInput] = useState(false);
-  const [rsvpMessage, setRsvpMessage] = useState(null); // Feedback for RSVP actions
-  const [deleting, setDeleting] = useState(false); // State for deletion
+  const [rsvpMessage, setRsvpMessage] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const event = useSelector((state) => state.events.currentEvent);
-  const users = useSelector((state) => state.users.users || []); // Ensure users is a default empty array
+  const users = useSelector((state) => state.users.users || []);
   const loading = useSelector((state) => state.events.loading);
   const error = useSelector((state) => state.events.error);
   const currentUserId = useSelector((state) => state.auth.user?.id);
 
   useEffect(() => {
-    dispatch(fetchEventById(id)); // Fetch event details
-    dispatch(fetchUsers()); // Fetch all users
+    dispatch(fetchEventById(id));
+    dispatch(fetchUsers());
   }, [dispatch, id]);
 
   useEffect(() => {
-    // Filter users based on search query
     if (searchQuery.trim() === '') {
       setFilteredUsers(users);
     } else {
       const query = searchQuery.toLowerCase();
       setFilteredUsers(
-        users.filter((user) => user.username?.toLowerCase().includes(query)) // Safeguard against undefined username
+        users.filter((user) => user.username?.toLowerCase().includes(query))
       );
     }
   }, [searchQuery, users]);
 
   const handleRSVP = async (status) => {
     try {
+      const isInvited = event.rsvps?.some((rsvp) => rsvp.user_id === currentUserId);
+      if (!isInvited) {
+        setRsvpMessage('You must be invited to RSVP to this event.');
+        return;
+      }
+
       const result = await dispatch(createRSVP({ event_id: id, status }));
       if (result.meta.requestStatus === 'fulfilled') {
         setRsvpMessage(`RSVP ${status} successfully!`);
@@ -74,8 +79,6 @@ function EventDetail() {
       }
     }
   };
-  
-  
 
   const handleInviteUser = async (userId) => {
     try {
@@ -103,7 +106,6 @@ function EventDetail() {
     <div className="event-detail">
       {event && (
         <>
-          {/* Event Information */}
           <div className="event-info">
             <h2>{event.name}</h2>
             <p>
@@ -115,7 +117,6 @@ function EventDetail() {
             <p>{event.description}</p>
           </div>
 
-          {/* RSVP Section */}
           <div className="rsvp-actions">
             <h3>Your RSVP</h3>
             {rsvpMessage && <p className="rsvp-feedback">{rsvpMessage}</p>}
@@ -133,26 +134,26 @@ function EventDetail() {
             </button>
           </div>
 
-          {/* RSVP List */}
           <div className="rsvp-list">
-            <h3>RSVPs</h3>
+            <h3>Accepted RSVPs</h3>
             {event.rsvps && event.rsvps.length > 0 ? (
               <ul>
-                {event.rsvps.map((rsvp) => (
-                  <li key={rsvp.user_id}>
-                    <span className="rsvp-username">{rsvp.username}</span>
-                    <span className={`rsvp-status ${rsvp.status.toLowerCase()}`}>
-                      {rsvp.status}
-                    </span>
-                  </li>
-                ))}
+                {event.rsvps
+                  .filter((rsvp) => rsvp.status === 'Confirmed') // Only display accepted RSVPs
+                  .map((rsvp) => (
+                    <li key={rsvp.user_id}>
+                      <span className="rsvp-username">{rsvp.username}</span>
+                      <span className={`rsvp-status ${rsvp.status.toLowerCase()}`}>
+                        ({rsvp.status})
+                      </span>
+                    </li>
+                  ))}
               </ul>
             ) : (
-              <p>No RSVPs yet.</p>
+              <p>No confirmed RSVPs yet.</p>
             )}
           </div>
 
-          {/* Invite User Section */}
           {currentUserId === event.user_id && (
             <div className="invite-section">
               <button
@@ -192,17 +193,15 @@ function EventDetail() {
             </div>
           )}
 
-          {/* Delete Button */}
           {currentUserId === event.user_id && (
             <button
-            className="delete-button"
-            onClick={handleDeleteEvent}
-            title="Delete Event"
-            disabled={deleting} // Disable the button while deleting
-          >
-            {deleting ? 'Deleting...' : 'Delete Event'}
-          </button>
-          
+              className="delete-button"
+              onClick={handleDeleteEvent}
+              title="Delete Event"
+              disabled={deleting}
+            >
+              {deleting ? 'Deleting...' : 'Delete Event'}
+            </button>
           )}
         </>
       )}
