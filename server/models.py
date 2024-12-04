@@ -5,7 +5,8 @@ import re
 import bcrypt
 
 # Association tables remain the same
-group_member = db.Table('group_member',
+group_member = db.Table(
+    'group_member',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True)
 )
@@ -29,17 +30,19 @@ class GroupInvitation(db.Model, SerializerMixin):
     invitee = db.relationship('User', foreign_keys=[invited_user_id], back_populates='received_group_invitations')
 
     serialize_rules = (
-        '-group',  # Block entire group relationship
-        '-inviter',  # Block entire inviter relationship
-        '-invitee'   # Block entire invitee relationship
+        '-group',
+        '-inviter',
+        '-invitee'
     )
 
-
     def accept(self):
+        """Mark the invitation as accepted and add the user to the group."""
         self.status = "Accepted"
+        self.invitee.add_group(self.group)
         db.session.commit()
 
     def deny(self):
+        """Mark the invitation as denied."""
         self.status = "Denied"
         db.session.commit()
 
@@ -145,6 +148,16 @@ class User(db.Model, SerializerMixin):
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+
+    def add_group(self, group):
+        """Add the user to a group."""
+        if not self.is_member_of_group(group):
+            self.groups.append(group)
+            db.session.commit()
+
+    def is_member_of_group(self, group):
+        """Check if the user is already a member of the group."""
+        return group in self.groups
 
 class Group(db.Model, SerializerMixin):
     __tablename__ = 'groups'

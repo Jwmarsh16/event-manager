@@ -162,14 +162,20 @@ class UserProfile(Resource):
                     "id": event.id,
                     "name": event.name,
                     "date": event.date.strftime('%Y-%m-%d'),
+                    "location": event.location,
+                    "description": event.description,
                     "rsvp_status": next(
                         (rsvp.status for rsvp in user.rsvps if rsvp.event_id == event.id),
                         "Needs RSVP"
                     )
                 }
-                for event in user.events
+                for event in user.events + [
+                    invitation.event for invitation in user.received_event_invitations
+                    if invitation.status == "Accepted"
+                ]
             ]
         }, 200
+
 
 
 
@@ -414,19 +420,15 @@ class DenyEventInvitation(Resource):
     def put(self, invitation_id):
         try:
             current_user_id = int(get_jwt_identity())
-        except ValueError:
-            return {"message": "Invalid user ID in JWT"}, 400
+            invitation = EventInvitation.query.get_or_404(invitation_id)
+            if invitation.invitee_id != current_user_id:
+                return {"message": "You do not have permission to deny this invitation"}, 403
 
-        invitation = EventInvitation.query.get_or_404(invitation_id)
-        if invitation.invitee_id != current_user_id:
-            return {"message": "You do not have permission to deny this invitation"}, 403
-
-        invitation.status = 'Denied'
-        db.session.commit()
-
-        # Serialize the updated invitation with restricted fields
-        invitation_data = invitation.to_dict(rules=('-event.invitations', '-inviter.sent_event_invitations', '-invitee.received_event_invitations'))
-        return {"message": "Invitation denied", "invitation": invitation_data}, 200
+            invitation.status = 'Denied'
+            db.session.commit()
+            return {"id": invitation_id}, 200
+        except Exception as e:
+            return {"message": f"Error: {str(e)}"}, 500
 
 
 class AcceptEventInvitation(Resource):
@@ -434,19 +436,16 @@ class AcceptEventInvitation(Resource):
     def put(self, invitation_id):
         try:
             current_user_id = int(get_jwt_identity())
-        except ValueError:
-            return {"message": "Invalid user ID in JWT"}, 400
+            invitation = EventInvitation.query.get_or_404(invitation_id)
+            if invitation.invitee_id != current_user_id:
+                return {"message": "You do not have permission to accept this invitation"}, 403
 
-        invitation = EventInvitation.query.get_or_404(invitation_id)
-        if invitation.invitee_id != current_user_id:
-            return {"message": "You do not have permission to accept this invitation"}, 403
+            invitation.status = 'Accepted'
+            db.session.commit()
+            return {"id": invitation_id}, 200
+        except Exception as e:
+            return {"message": f"Error: {str(e)}"}, 500
 
-        invitation.status = 'Accepted'
-        db.session.commit()
-
-        # Serialize the updated invitation with restricted fields
-        invitation_data = invitation.to_dict(rules=('-event.invitations', '-inviter.sent_event_invitations', '-invitee.received_event_invitations'))
-        return {"message": "Invitation accepted", "invitation": invitation_data}, 200
 
 
 
@@ -591,41 +590,42 @@ class DenyGroupInvitation(Resource):
     def put(self, invitation_id):
         try:
             current_user_id = int(get_jwt_identity())
-        except ValueError:
-            return {"message": "Invalid user ID in JWT"}, 400
+            invitation = GroupInvitation.query.get_or_404(invitation_id)
+            if invitation.invited_user_id != current_user_id:
+                return {"message": "You do not have permission to deny this invitation"}, 403
 
-        invitation = GroupInvitation.query.get_or_404(invitation_id)
-        if invitation.invited_user_id != current_user_id:
-            return {"message": "You do not have permission to deny this invitation"}, 403
+            # Update invitation status to "Denied"
+            invitation.status = 'Denied'
+            db.session.commit()
 
-        invitation.status = 'Denied'
-        db.session.commit()
-
-        invitation_data = invitation.to_dict(rules=('-group.invitations', '-inviter.sent_group_invitations', '-invitee.received_group_invitations'))
-        return {"message": "Invitation denied", "invitation": invitation_data}, 200
-
+            # Return consistent key with "id" for frontend filtering
+            return {"id": invitation.id}, 200
+        except Exception as e:
+            return {"message": f"Error: {str(e)}"}, 500
 
 
+# Updated AcceptGroupInvitation
 class AcceptGroupInvitation(Resource):
     @jwt_required()
     def put(self, invitation_id):
         try:
             current_user_id = int(get_jwt_identity())
-        except ValueError:
-            return {"message": "Invalid user ID in JWT"}, 400
+            invitation = GroupInvitation.query.get_or_404(invitation_id)
+            if invitation.invited_user_id != current_user_id:
+                return {"message": "You do not have permission to accept this invitation"}, 403
 
-        invitation = GroupInvitation.query.get_or_404(invitation_id)
-        if invitation.invited_user_id != current_user_id:
-            return {"message": "You do not have permission to accept this invitation"}, 403
+            # Update invitation status to "Accepted"
+            invitation.status = 'Accepted'
+            user = User.query.get_or_404(current_user_id)
+            group = Group.query.get_or_404(invitation.group_id)
+            group.members.append(user)
+            db.session.commit()
 
-        invitation.status = 'Accepted'
-        user = User.query.get_or_404(current_user_id)
-        group = Group.query.get_or_404(invitation.group_id)
-        user.add_group(group)
+            # Return consistent key with "id" for frontend filtering
+            return {"id": invitation.id}, 200
+        except Exception as e:
+            return {"message": f"Error: {str(e)}"}, 500
 
-        db.session.commit()
-        invitation_data = invitation.to_dict(rules=('-group.invitations', '-inviter.sent_group_invitations', '-invitee.received_group_invitations'))
-        return {"message": "Invitation accepted", "invitation": invitation_data}, 200
 
 
 
@@ -726,19 +726,20 @@ api.add_resource(UserProfile, '/api/profile', '/api/profile/<int:user_id>')
 api.add_resource(EventList, '/api/events')  # Updated to support search
 api.add_resource(EventDetail, '/api/events/<int:event_id>')
 api.add_resource(EventInvite, '/api/events/<int:event_id>/invite')
-api.add_resource(EventInvitations, '/api/invitations')  # For listing event invitations
-api.add_resource(DenyEventInvitation, '/api/invitations/<int:invitation_id>/deny')  # For denying an event invitation
-api.add_resource(AcceptEventInvitation, '/api/invitations/<int:invitation_id>/accept')  # For accepting an event invitation
+api.add_resource(EventInvitations, '/api/event_invitations')  # For listing event invitations
+api.add_resource(DenyEventInvitation, '/api/event_invitations/<int:invitation_id>/deny')  # For denying an event invitation
+api.add_resource(AcceptEventInvitation, '/api/event_invitations/<int:invitation_id>/accept')  # For accepting an event invitation
 api.add_resource(GroupList, '/api/groups')  # Updated to support search
 api.add_resource(GroupDetail, '/api/groups/<int:group_id>')
 api.add_resource(GroupInvite, '/api/groups/<int:group_id>/invite')
-api.add_resource(GroupInvitations, '/api/invitations')
+api.add_resource(GroupInvitations, '/api/group_invitations')  # For listing group invitations
+api.add_resource(AcceptGroupInvitation, '/api/group_invitations/<int:invitation_id>/accept')  # For accepting a group invitation
+api.add_resource(DenyGroupInvitation, '/api/group_invitations/<int:invitation_id>/deny')  # For denying a group invitation
 api.add_resource(RSVPList, '/api/rsvps')
 api.add_resource(EventRSVPs, '/api/events/<int:event_id>/rsvps')
 api.add_resource(CommentList, '/api/events/<int:event_id>/comments')
 api.add_resource(EventComments, '/api/events/<int:event_id>/comments')
-api.add_resource(AcceptGroupInvitation, '/api/invitations/<int:invitation_id>/accept')
-api.add_resource(DenyGroupInvitation, '/api/invitations/<int:invitation_id>/deny')
+
 # Add the resource to handle user profile deletion
 api.add_resource(DeleteProfile, '/api/profile/delete')
             

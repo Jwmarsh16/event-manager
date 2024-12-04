@@ -94,14 +94,14 @@ export const deleteGroup = createAsyncThunk('groups/deleteGroup', async (groupId
 // Group invitations
 export const fetchGroupInvitations = createAsyncThunk('groups/fetchGroupInvitations', async (_, thunkAPI) => {
   try {
-    const response = await fetchWithCredentials('/api/invitations');
+    const response = await fetchWithCredentials('/api/group_invitations');
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch invitations');
+      throw new Error(errorData.message || 'Failed to fetch group invitations');
     }
     return await response.json();
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to fetch invitations');
+    return thunkAPI.rejectWithValue(error.message || 'Failed to fetch group invitations');
   }
 });
 
@@ -124,29 +124,36 @@ export const sendGroupInvite = createAsyncThunk(
   }
 );
 
+// Thunk to accept a group invitation
+// Updated acceptGroupInvite thunk
 export const acceptGroupInvite = createAsyncThunk('groups/acceptGroupInvite', async (inviteId, thunkAPI) => {
   try {
-    const response = await fetchWithCredentials(`/api/invitations/${inviteId}/accept`, { method: 'PUT' });
+    const response = await fetchWithCredentials(`/api/group_invitations/${inviteId}/accept`, { method: 'PUT' });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to accept invitation');
+      throw new Error(errorData.message || 'Failed to accept group invitation');
     }
-    return await response.json();
+    // Use "id" from the response to match the backend
+    const { id } = await response.json();
+    return { id };
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to accept invitation');
+    return thunkAPI.rejectWithValue(error.message || 'Failed to accept group invitation');
   }
 });
 
+// Updated denyGroupInvite thunk
 export const denyGroupInvite = createAsyncThunk('groups/denyGroupInvite', async (inviteId, thunkAPI) => {
   try {
-    const response = await fetchWithCredentials(`/api/invitations/${inviteId}/deny`, { method: 'PUT' });
+    const response = await fetchWithCredentials(`/api/group_invitations/${inviteId}/deny`, { method: 'PUT' });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to deny invitation');
+      throw new Error(errorData.message || 'Failed to deny group invitation');
     }
-    return await response.json();
+    // Use "id" from the response to match the backend
+    const { id } = await response.json();
+    return { id };
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to deny invitation');
+    return thunkAPI.rejectWithValue(error.message || 'Failed to deny group invitation');
   }
 });
 
@@ -247,11 +254,11 @@ const groupSlice = createSlice({
       })
       .addCase(fetchGroupInvitations.fulfilled, (state, action) => {
         state.loading = false;
-        state.invitations = action.payload;
+        state.invitations = action.payload; // Store group invitations separately
       })
       .addCase(fetchGroupInvitations.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to fetch invitations';
+        state.error = action.payload || 'Failed to fetch group invitations';
       })
 
       .addCase(sendGroupInvite.pending, (state) => {
@@ -269,6 +276,7 @@ const groupSlice = createSlice({
         state.loading = false;
       })
 
+      // Group slice reducers
       .addCase(acceptGroupInvite.pending, (state) => {
         state.inviteStatus = null;
         state.inviteError = null;
@@ -277,16 +285,16 @@ const groupSlice = createSlice({
       .addCase(acceptGroupInvite.fulfilled, (state, action) => {
         state.inviteStatus = 'success';
         state.loading = false;
+        // Remove the accepted invite by matching "id"
         state.invitations = state.invitations.filter(
           (invitation) => invitation.id !== action.payload.id
         );
       })
       .addCase(acceptGroupInvite.rejected, (state, action) => {
         state.inviteStatus = 'failed';
-        state.inviteError = action.payload || 'Failed to accept invitation';
+        state.inviteError = action.payload || 'Failed to accept group invitation';
         state.loading = false;
       })
-
       .addCase(denyGroupInvite.pending, (state) => {
         state.inviteStatus = null;
         state.inviteError = null;
@@ -295,15 +303,17 @@ const groupSlice = createSlice({
       .addCase(denyGroupInvite.fulfilled, (state, action) => {
         state.inviteStatus = 'success';
         state.loading = false;
+        // Remove the denied invite by matching "id"
         state.invitations = state.invitations.filter(
           (invitation) => invitation.id !== action.payload.id
         );
       })
       .addCase(denyGroupInvite.rejected, (state, action) => {
         state.inviteStatus = 'failed';
-        state.inviteError = action.payload || 'Failed to deny invitation';
+        state.inviteError = action.payload || 'Failed to deny group invitation';
         state.loading = false;
       });
+
   },
 });
 

@@ -163,7 +163,7 @@ export const rsvpToEvent = createAsyncThunk('events/rsvpToEvent', async ({ event
 export const fetchEventInvitations = createAsyncThunk('events/fetchEventInvitations', async (_, thunkAPI) => {
   try {
     console.log('Fetching event invitations...');
-    const response = await fetchWithCredentials('/api/invitations');
+    const response = await fetchWithCredentials('/api/event_invitations');
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Error fetching event invitations:', errorData.message);
@@ -180,7 +180,7 @@ export const fetchEventInvitations = createAsyncThunk('events/fetchEventInvitati
 export const acceptEventInvite = createAsyncThunk('events/acceptEventInvite', async (invitationId, thunkAPI) => {
   try {
     console.log(`Accepting event invitation ID: ${invitationId}`);
-    const response = await fetchWithCredentials(`/api/invitations/${invitationId}/accept`, {
+    const response = await fetchWithCredentials(`/api/event_invitations/${invitationId}/accept`, {
       method: 'PUT',
     });
     if (!response.ok) {
@@ -199,7 +199,7 @@ export const acceptEventInvite = createAsyncThunk('events/acceptEventInvite', as
 export const denyEventInvite = createAsyncThunk('events/denyEventInvite', async (invitationId, thunkAPI) => {
   try {
     console.log(`Denying event invitation ID: ${invitationId}`);
-    const response = await fetchWithCredentials(`/api/invitations/${invitationId}/deny`, {
+    const response = await fetchWithCredentials(`/api/event_invitations/${invitationId}/deny`, {
       method: 'PUT',
     });
     if (!response.ok) {
@@ -373,7 +373,7 @@ const eventSlice = createSlice({
       })
       .addCase(fetchEventInvitations.fulfilled, (state, action) => {
         state.loading = false;
-        state.invitations = action.payload;
+        state.invitations = action.payload; // Event invitations will be updated in state
         state.operation = null;
       })
       .addCase(fetchEventInvitations.rejected, (state, action) => {

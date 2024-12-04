@@ -15,7 +15,7 @@ function UserProfile() {
   const error = useSelector((state) => state.users.error);
 
   useEffect(() => {
-    dispatch(fetchUserProfileById(id));
+    dispatch(fetchUserProfileById(id)); // Fetch profile details on mount
   }, [dispatch, id]);
 
   const handleDelete = () => {
@@ -41,7 +41,7 @@ function UserProfile() {
         <h3>Groups</h3>
         {profile?.groups.length > 0 ? (
           <ul className="profile-list">
-            {profile.groups.map(group => (
+            {profile.groups.map((group) => (
               <li key={group.id} className="profile-list-item">
                 <Link to={`/groups/${group.id}`}>{group.name}</Link>
               </li>
@@ -56,7 +56,7 @@ function UserProfile() {
         <h3>Events</h3>
         {profile?.events.length > 0 ? (
           <ul className="profile-list">
-            {profile.events.map(event => (
+            {profile.events.map((event) => (
               <li key={event.id} className="profile-list-item">
                 <Link to={`/events/${event.id}`}>{event.name}</Link> - {event.rsvp_status}
               </li>
