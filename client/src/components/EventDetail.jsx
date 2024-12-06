@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../redux/eventSlice'; // Fetch the event
-import { fetchUsers } from '../redux/userSlice'; // Fetch users
-import { inviteUserToEvent } from '../redux/inviteSlice'; // Invite users
 import { createRSVP } from '../redux/rsvpSlice'; // RSVP actions
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -14,11 +12,9 @@ function EventDetail() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState(''); // Search query for user search
-  const [filteredUsers, setFilteredUsers] = useState([]); // Filtered user list
-  const [showInviteInput, setShowInviteInput] = useState(false);
   const [rsvpMessage, setRsvpMessage] = useState(null); // Feedback for RSVP actions
   const [deleting, setDeleting] = useState(false); // State for deletion
+  const [localRSVPs, setLocalRSVPs] = useState([]); // Local state for RSVP list
 
   const event = useSelector((state) => state.events.currentEvent);
   const users = useSelector((state) => state.users.users || []); // Ensure users is a default empty array
@@ -27,29 +23,36 @@ function EventDetail() {
   const currentUserId = useSelector((state) => state.auth.user?.id);
 
   useEffect(() => {
-    dispatch(fetchEventById(id)); // Fetch event details
-    dispatch(fetchUsers()); // Fetch all users
+    dispatch(fetchEventById(id)).then((action) => {
+      if (action.meta.requestStatus === 'fulfilled') {
+        setLocalRSVPs(action.payload.rsvps); // Initialize local RSVP list
+      }
+    });
   }, [dispatch, id]);
-
-  useEffect(() => {
-    // Filter users based on search query
-    if (searchQuery.trim() === '') {
-      setFilteredUsers(users);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredUsers(
-        users.filter((user) => user.username?.toLowerCase().includes(query)) // Safeguard against undefined username
-      );
-    }
-  }, [searchQuery, users]);
 
   const handleRSVP = async (status) => {
     try {
       const result = await dispatch(createRSVP({ event_id: id, status }));
       if (result.meta.requestStatus === 'fulfilled') {
         setRsvpMessage(`RSVP ${status} successfully!`);
+        // Update local RSVP list
+        const updatedRSVP = {
+          user_id: currentUserId,
+          username: users.find((user) => user.id === currentUserId)?.username || 'You',
+          status,
+        };
+        setLocalRSVPs((prevRSVPs) => {
+          const existingRSVPIndex = prevRSVPs.findIndex((rsvp) => rsvp.user_id === currentUserId);
+          if (existingRSVPIndex !== -1) {
+            const updatedRSVPs = [...prevRSVPs];
+            updatedRSVPs[existingRSVPIndex] = updatedRSVP;
+            return updatedRSVPs;
+          } else {
+            return [...prevRSVPs, updatedRSVP];
+          }
+        });
       } else {
-        setRsvpMessage('Failed to submit RSVP. Please try again.');
+        setRsvpMessage('Must accept event invite to submit RSVP. Please try again.');
       }
     } catch (error) {
       setRsvpMessage(error.message || 'Failed to submit RSVP.');
@@ -74,22 +77,6 @@ function EventDetail() {
       }
     }
   };
-  
-  
-
-  const handleInviteUser = async (userId) => {
-    try {
-      const result = await dispatch(inviteUserToEvent({ eventId: id, invitedUserId: userId }));
-      if (result.meta.requestStatus === 'fulfilled') {
-        alert('User invited successfully!');
-      } else {
-        alert('Failed to invite user. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error inviting user:', error);
-      alert(error.message || 'Failed to invite user.');
-    }
-  };
 
   if (loading) {
     return <div className="loading">Loading event details...</div>;
@@ -106,6 +93,9 @@ function EventDetail() {
           {/* Event Information */}
           <div className="event-info">
             <h2>{event.name}</h2>
+            <p>
+              <strong>Host:</strong> {event.user.username}
+            </p>
             <p>
               <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
             </p>
@@ -136,9 +126,9 @@ function EventDetail() {
           {/* RSVP List */}
           <div className="rsvp-list">
             <h3>RSVPs</h3>
-            {event.rsvps && event.rsvps.length > 0 ? (
+            {localRSVPs.length > 0 ? (
               <ul>
-                {event.rsvps.map((rsvp) => (
+                {localRSVPs.map((rsvp) => (
                   <li key={rsvp.user_id}>
                     <span className="rsvp-username">{rsvp.username}</span>
                     <span className={`rsvp-status ${rsvp.status.toLowerCase()}`}>
@@ -155,54 +145,22 @@ function EventDetail() {
           {/* Invite User Section */}
           {currentUserId === event.user_id && (
             <div className="invite-section">
-              <button
-                className="invite-button"
-                onClick={() => setShowInviteInput((prev) => !prev)}
-              >
+              <Link to={`/events/${id}/invite`} className="invite-link">
                 Invite Users
-              </button>
-              {showInviteInput && (
-                <div className="invite-form">
-                  <input
-                    type="text"
-                    placeholder="Search for users"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input"
-                  />
-                  {filteredUsers.length > 0 ? (
-                    <ul className="user-search-results">
-                      {filteredUsers.map((user) => (
-                        <li key={user.id} className="user-search-item">
-                          <span>{user.username}</span>
-                          <button
-                            className="invite-user-button"
-                            onClick={() => handleInviteUser(user.id)}
-                          >
-                            Invite
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No users found.</p>
-                  )}
-                </div>
-              )}
+              </Link>
             </div>
           )}
 
           {/* Delete Button */}
           {currentUserId === event.user_id && (
             <button
-            className="delete-button"
-            onClick={handleDeleteEvent}
-            title="Delete Event"
-            disabled={deleting} // Disable the button while deleting
-          >
-            {deleting ? 'Deleting...' : 'Delete Event'}
-          </button>
-          
+              className="delete-button"
+              onClick={handleDeleteEvent}
+              title="Delete Event"
+              disabled={deleting} // Disable the button while deleting
+            >
+              {deleting ? 'Deleting...' : 'Delete Event'}
+            </button>
           )}
         </>
       )}

@@ -2,6 +2,7 @@ from faker import Faker
 from config import app, db
 from models import User, Event, Group, RSVP, Comment, GroupInvitation, EventInvitation
 import random
+from datetime import datetime, timezone
 
 # Initialize Faker
 fake = Faker()
@@ -94,11 +95,14 @@ def seed_event_invitations(users, events, num_invitations=20):
         while invitee.id == inviter.id:
             invitee = random.choice(users)
 
+        # Use datetime.now(timezone.utc) for timestamps
         event_invitation = EventInvitation(
             event_id=random.choice(events).id,
             inviter_id=inviter.id,
             invitee_id=invitee.id,
             status=random.choice(['Pending', 'Accepted', 'Denied']),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
         db.session.add(event_invitation)
     db.session.commit()

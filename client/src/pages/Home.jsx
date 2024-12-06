@@ -25,11 +25,15 @@ function Home() {
     <div className="home-container">
       {/* Hero Section */}
       <header className="hero">
-        <h1>Welcome to Event Manager</h1>
-        <p>Plan, join, and manage events effortlessly. Connect with users and discover groups tailored to your interests.</p>
-        <div className="hero-buttons">
-          <Link to="/events" className="hero-button">Create an Event</Link>
-          <Link to="/groups" className="hero-button">Explore Groups</Link>
+        <div className="hero-overlay">
+          <h1>Welcome to Event Manager</h1>
+          <p>
+            Plan, join, and manage events effortlessly. Connect with users and discover groups tailored to your interests.
+          </p>
+          <div className="hero-buttons">
+            <Link to="/events" className="hero-button">Create an Event</Link>
+            <Link to="/groups" className="hero-button">Create a Group</Link>
+          </div>
         </div>
       </header>
 
@@ -42,7 +46,7 @@ function Home() {
           <h2>Featured Users</h2>
           {users.length > 0 ? (
             <ul>
-              {users.slice(0, 5).map(user => (
+              {users.slice(0, 5).map((user) => (
                 <li key={user.id}>
                   <Link to={`/profile/${user.id}`}>{user.username}</Link>
                 </li>
@@ -57,7 +61,7 @@ function Home() {
           <h2>Upcoming Events</h2>
           {events.length > 0 ? (
             <ul>
-              {events.slice(0, 5).map(event => (
+              {events.slice(0, 5).map((event) => (
                 <li key={event.id}>
                   <Link to={`/events/${event.id}`}>{event.name}</Link> - {new Date(event.date).toLocaleDateString()}
                 </li>
@@ -72,7 +76,7 @@ function Home() {
           <h2>Popular Groups</h2>
           {groups.length > 0 ? (
             <ul>
-              {groups.slice(0, 5).map(group => (
+              {groups.slice(0, 5).map((group) => (
                 <li key={group.id}>
                   <Link to={`/groups/${group.id}`}>{group.name}</Link> - {group.description}
                 </li>

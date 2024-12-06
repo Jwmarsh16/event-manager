@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchUserProfileById } from '../redux/userSlice';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { deleteProfile } from '../redux/authSlice';
-import { FaUserCircle } from 'react-icons/fa';
 import '../style/UserProfileStyle.css';
 
 function UserProfile() {
@@ -19,7 +18,11 @@ function UserProfile() {
   }, [dispatch, id]);
 
   const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete your profile? This action is irreversible.")) {
+    if (
+      window.confirm(
+        'Are you sure you want to delete your profile? This action is irreversible.'
+      )
+    ) {
       dispatch(deleteProfile()).then(() => {
         navigate('/goodbye');
       });
@@ -31,12 +34,21 @@ function UserProfile() {
 
   return (
     <div className="user-profile">
+      {/* Profile Header */}
       <div className="profile-header">
-        <FaUserCircle size={90} className="profile-icon" />
+        <div className="profile-avatar">
+          {/* Use pravatar for fake avatars */}
+          <img
+            src={`https://i.pravatar.cc/150?u=${id}`}
+            alt={`${profile?.username}'s Avatar`}
+            className="avatar-img"
+          />
+        </div>
         <h2>{profile?.username}</h2>
         <p className="profile-email">{profile?.email}</p>
       </div>
 
+      {/* Groups Section */}
       <div className="profile-section">
         <h3>Groups</h3>
         {profile?.groups.length > 0 ? (
@@ -52,13 +64,15 @@ function UserProfile() {
         )}
       </div>
 
+      {/* Events Section */}
       <div className="profile-section">
         <h3>Events</h3>
         {profile?.events.length > 0 ? (
           <ul className="profile-list">
             {profile.events.map((event) => (
               <li key={event.id} className="profile-list-item">
-                <Link to={`/events/${event.id}`}>{event.name}</Link> - {event.rsvp_status}
+                <Link to={`/events/${event.id}`}>{event.name}</Link> -{' '}
+                {event.rsvp_status}
               </li>
             ))}
           </ul>
@@ -67,6 +81,7 @@ function UserProfile() {
         )}
       </div>
 
+      {/* Delete Profile Button */}
       <button onClick={handleDelete} className="delete-button">
         Delete Profile
       </button>

@@ -37,12 +37,12 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Keep this False to save 
 # JWT Configuration
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_COOKIE_SECURE'] = True  # Enforces secure cookies over HTTPS changed to false for development
-app.config['JWT_COOKIE_SAMESITE'] = 'None'  # Required for cross-site cookie sharing
+app.config['JWT_COOKIE_SAMESITE'] = 'None'  # Required for cross-site cookie sharing changed to Lax for development, None for production
 app.config['JWT_COOKIE_HTTPONLY'] = True  # Prevents JavaScript from accessing cookies changed to false for development
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'  # Path for access tokens
 app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'  # Path for refresh tokens
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True  # Enable CSRF protection in production
-app.config['JWT_CSRF_CHECK_FORM'] = False  # Ensure forms are checked for CSRF tokens
+app.config['JWT_CSRF_CHECK_FORM'] = True  # Ensure forms are checked for CSRF tokens
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Secure JWT key from environment
 
 # Optional: CSRF Protection for Flask-WTF

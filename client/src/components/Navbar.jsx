@@ -47,6 +47,11 @@ function Navbar() {
         </li>
         {isAuthenticated ? (
           <>
+            <li className={window.location.pathname === `/profile/${currentUserId}` ? 'active' : ''}>
+              <Link to={`/profile/${currentUserId}`} className="navbar-button" onClick={closeMenu}>
+                Profile
+              </Link>
+            </li>
             <li className={window.location.pathname === '/events' ? 'active' : ''}>
               <Link to="/events" className="navbar-button" onClick={closeMenu}>
                 Events
@@ -57,15 +62,7 @@ function Navbar() {
                 Groups
               </Link>
             </li>
-            <li className={window.location.pathname === `/profile/${currentUserId}` ? 'active' : ''}>
-              <Link
-                to={`/profile/${currentUserId}`}
-                className="navbar-button"
-                onClick={closeMenu}
-              >
-                Profile
-              </Link>
-            </li>
+            
             <li className={window.location.pathname === '/invitations' ? 'active' : ''}>
               <Link to="/invitations" className="navbar-button" onClick={closeMenu}>
                 Invitations

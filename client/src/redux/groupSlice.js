@@ -105,6 +105,23 @@ export const fetchGroupInvitations = createAsyncThunk('groups/fetchGroupInvitati
   }
 });
 
+export const fetchGroupInvitationsForGroup = createAsyncThunk(
+  'groups/fetchGroupInvitationsForGroup',
+  async (groupId, thunkAPI) => {
+    try {
+      const response = await fetchWithCredentials(`/api/groups/${groupId}/invitations`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch group invitations');
+      }
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch group invitations');
+    }
+  }
+);
+
+
 export const sendGroupInvite = createAsyncThunk(
   'groups/sendGroupInvite',
   async ({ groupId, invitedUserId }, thunkAPI) => {
@@ -156,6 +173,29 @@ export const denyGroupInvite = createAsyncThunk('groups/denyGroupInvite', async 
     return thunkAPI.rejectWithValue(error.message || 'Failed to deny group invitation');
   }
 });
+
+export const deleteGroupInvite = createAsyncThunk(
+  'groups/deleteGroupInvite',
+  async (invitationId, thunkAPI) => {
+    try {
+      const response = await fetchWithCredentials('/api/group_invitations', {
+        method: 'DELETE',
+        body: JSON.stringify({ id: invitationId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete group invitation');
+      }
+
+      // Return the deleted invitation ID for frontend state updates
+      const { id } = await response.json();
+      return { id };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Failed to delete group invitation');
+    }
+  }
+);
 
 // Group slice
 const groupSlice = createSlice({
@@ -261,6 +301,20 @@ const groupSlice = createSlice({
         state.error = action.payload || 'Failed to fetch group invitations';
       })
 
+      // Fetch Group Invitations for a Specific Group
+      .addCase(fetchGroupInvitationsForGroup.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchGroupInvitationsForGroup.fulfilled, (state, action) => {
+        state.loading = false;
+        state.invitations = action.payload; // Update invitations with fetched data
+      })
+      .addCase(fetchGroupInvitationsForGroup.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch group invitations';
+      })
+
       .addCase(sendGroupInvite.pending, (state) => {
         state.inviteStatus = null;
         state.inviteError = null;
@@ -312,7 +366,26 @@ const groupSlice = createSlice({
         state.inviteStatus = 'failed';
         state.inviteError = action.payload || 'Failed to deny group invitation';
         state.loading = false;
-      });
+      })
+      .addCase(deleteGroupInvite.pending, (state) => {
+        state.inviteStatus = null;
+        state.inviteError = null;
+        state.loading = true;
+      })
+      .addCase(deleteGroupInvite.fulfilled, (state, action) => {
+        state.inviteStatus = 'success';
+        state.loading = false;
+      
+        // Remove the canceled invitation by matching its ID
+        state.invitations = state.invitations.filter(
+          (invitation) => invitation.id !== action.payload.id
+        );
+      })
+      .addCase(deleteGroupInvite.rejected, (state, action) => {
+        state.inviteStatus = 'failed';
+        state.inviteError = action.payload || 'Failed to delete group invitation';
+        state.loading = false;
+      });      
 
   },
 });

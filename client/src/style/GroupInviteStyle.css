@@ -1,118 +1,158 @@
 /* General Container */
 .group-invite-container {
-    max-width: 600px;
-    margin: 20px auto;
+    max-width: 800px;
+    margin: 30px auto;
     padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #f9f9f9, #e3f2fd);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Title Styling */
-.invite-title {
+  }
+  
+  /* Title Styling */
+  .invite-title {
     text-align: center;
     color: #107880;
-    font-size: 1.8rem;
+    font-size: 2rem;
     margin-bottom: 20px;
-}
-
-/* Search Input */
-.search-input {
-    padding: 10px;
-    font-size: 1rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    outline: none;
-    background-color: #f9f9f9;
-    transition: border-color 0.3s ease;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Search Input */
+  .search-input {
+    display: block;
     width: 100%;
-    margin-bottom: 20px;
-}
-
-.search-input:focus {
-    border-color: #107880;
-}
-
-/* User Results Container */
-.user-results {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-/* Individual User Item */
-.user-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #f9f9f9;
-    padding: 10px 15px;
+    padding: 12px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
     border-radius: 8px;
+    margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.user-item:hover {
-    background-color: #e9f2fb;
-    transform: translateY(-2px);
-}
-
-/* Invite User Button */
-.invite-user-button {
-    padding: 8px 12px;
-    background-color: #107880;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    transition: border 0.3s ease;
+  }
+  
+  .search-input:focus {
+    border: 1px solid #107880;
+    outline: none;
+  }
+  
+  /* User List */
+  .user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  /* User Item */
+  .user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, background 0.3s ease;
+    flex-wrap: wrap;
+  }
+  
+  .user-item:hover {
+    background: #f0f8ff;
+    transform: translateY(-5px);
+  }
+  
+  /* User Info Section */
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+  }
+  
+  .user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #107880;
+  }
+  
+  .user-name {
+    font-size: 1rem;
+    color: #333;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Invite Button Section */
+  .invite-button {
+    padding: 8px 15px;
     font-size: 0.9rem;
     font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.invite-user-button:hover {
-    background-color: #0b5c66;
+    white-space: nowrap;
+  }
+  
+  /* Button Colors */
+  .invite-button.invite {
+    background-color: #007bff; /* Blue for "Invite" button */
+  }
+  
+  /* Button Hover Effects */
+  .invite-button:hover {
     transform: scale(1.05);
-}
-
-/* No Results Message */
-.no-results {
+    opacity: 0.9;
+  }
+  
+  /* No Results Message */
+  .no-results {
     text-align: center;
     color: #888;
     font-size: 1rem;
-}
-
-/* Feedback Message */
-.feedback-message {
+  }
+  
+  /* Feedback Message */
+  .feedback-message {
     margin-top: 20px;
     text-align: center;
     font-size: 1rem;
     color: #107880;
     font-weight: bold;
-}
-
-/* Error Feedback */
-.feedback-message.error {
-    color: #dc3545;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .group-invite-container {
-        padding: 15px;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .user-item {
+      flex-direction: column;
+      align-items: flex-start;
     }
-
-    .invite-title {
-        font-size: 1.5rem;
+  
+    .user-info {
+      flex-grow: 0;
+      justify-content: center;
     }
-
-    .search-input {
-        font-size: 0.9rem;
+  
+    .user-avatar {
+      width: 40px;
+      height: 40px;
     }
-
-    .invite-user-button {
-        font-size: 0.8rem;
-        padding: 8px 10px;
+  
+    .invite-button {
+      font-size: 0.8rem;
+      padding: 8px 10px;
     }
-}
+  
+    .user-list {
+      grid-template-columns: 1fr;
+    }
+  }
+  

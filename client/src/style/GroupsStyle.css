@@ -5,62 +5,64 @@
     padding: 20px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #333;
-    background-color: #f5f7fa;
+    background-color: #f9fafa;
+    line-height: 1.6;
 }
 
 /* Hero Section */
 .groups-hero {
     text-align: center;
-    background: linear-gradient(135deg, #107880, #00bcd4);
+    background: linear-gradient(135deg, #0a7e8c, #00bcd4);
     color: white;
-    padding: 50px 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
+    padding: 60px 20px;
+    border-radius: 10px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .groups-hero h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 3rem;
+    margin-bottom: 15px;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .groups-hero p {
     font-size: 1.2rem;
-    margin-bottom: 20px;
+    max-width: 800px;
+    margin: 0 auto 25px;
 }
 
 .groups-hero-buttons {
     display: flex;
     justify-content: center;
-    gap: 20px; /* Add space between buttons */
-    flex-wrap: wrap; /* Allow wrapping for smaller screens */
-    margin-top: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
 .groups-hero-buttons .hero-button {
     text-decoration: none;
     color: white;
-    background-color: #0a7e8c;
-    padding: 10px 20px;
-    border-radius: 5px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    font-size: 1rem; /* Adjust font size */
-    white-space: nowrap; /* Prevent text wrapping inside buttons */
+    background-color: #086869;
+    padding: 15px 25px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .groups-hero-buttons .hero-button:hover {
-    background-color: #086869;
-    transform: scale(1.05); /* Slightly enlarge on hover */
+    background-color: #064e53;
+    transform: translateY(-3px);
 }
 
-/* Form Styling */
+/* Form Section */
 .group-form-container {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
 }
 
 .group-form-container h2 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: #107880;
     margin-bottom: 20px;
 }
@@ -68,87 +70,166 @@
 .group-form {
     display: flex;
     flex-direction: column;
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
     background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
 }
 
 .group-form input,
 .group-form textarea {
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 15px;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 1rem;
+    background-color: #f7f9fc;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.group-form input:focus,
+.group-form textarea:focus {
+    border-color: #107880;
+    background-color: #eef7f9;
+    outline: none;
 }
 
 .group-form textarea {
     resize: vertical;
-    min-height: 80px;
+    min-height: 100px;
 }
 
 .group-form button {
-    padding: 10px;
+    padding: 12px;
     background-color: #107880;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 .group-form button:hover {
     background-color: #0a5d62;
+    transform: scale(1.03);
+}
+
+/* Search Bar */
+.search-container {
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.search-input {
+    width: 80%;
+    max-width: 600px;
+    padding: 12px 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #f7f9fc;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: #107880;
+    background-color: #eef7f9;
+    outline: none;
 }
 
 /* Groups List */
 .groups-list {
-    margin-top: 60px; /* Add more spacing above the section */
-    padding: 0 10px; /* Add padding to prevent overlap */
-    margin-bottom: 80px;
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+    padding: 0 20px;
 }
 
 .groups-list h2 {
     text-align: center;
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: #107880;
-    margin-bottom: 30px;
-}
-
-.groups-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 65px;
-    justify-content: center; /* Ensure cards are centered on smaller screens */
+    margin-bottom: 20px;
 }
 
 .group-card {
     background-color: white;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-    text-align: center; /* Center-align content inside the cards */
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+    cursor: pointer;
 }
 
 .group-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .group-card h3 {
     color: #107880;
     margin-bottom: 10px;
-    font-size: 1.5rem; /* Increase title size */
+    font-size: 1.8rem;
 }
 
 .group-card p {
     color: #555;
     font-size: 1rem;
-    line-height: 1.5; /* Improve readability */
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Groups List Section */
+.groups-list-container {
+    text-align: center; /* Center-align heading and search bar */
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding: 0 20px;
+}
+
+.groups-list-container h2 {
+    font-size: 2.5rem;
+    color: #107880;
+    margin-bottom: 20px; /* Add spacing between heading and search bar */
+}
+
+.search-container {
+    margin-bottom: 30px; /* Space between search bar and group cards */
+    display: flex;
+    justify-content: center;
+}
+
+.search-input {
+    width: 80%;
+    max-width: 600px;
+    padding: 12px 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #f7f9fc;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: #107880;
+    background-color: #eef7f9;
+    outline: none;
+}
+
+/* Group Cards Grid */
+.groups-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+    padding: 0 20px;
+    margin-top: 20px; /* Space between search bar and group cards */
 }
 
 /* Footer */
@@ -157,15 +238,16 @@
     padding: 20px;
     background-color: #107880;
     color: white;
-    margin-top: 40px;
-    border-radius: 8px;
+    margin-top: 60px;
+    border-radius: 10px;
+    box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
 }
 
 .footer-links a {
     color: white;
     text-decoration: none;
-    margin: 0 10px;
-    font-size: 0.9rem;
+    margin: 0 15px;
+    font-size: 1rem;
     transition: color 0.3s ease;
 }
 
@@ -175,14 +257,19 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    /* Adjust the groups list layout for small screens */
-    .groups-list {
-        grid-template-columns: 1fr; /* Stack cards vertically */
-        gap: 50px; /* Reduce spacing for smaller screens */
-        margin-right: 30px;
+    .groups-hero h1 {
+        font-size: 2.2rem;
     }
 
-    /* Adjust form layout for smaller screens */
+    .groups-hero p {
+        font-size: 1rem;
+    }
+
+    .groups-hero-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
     .group-form {
         padding: 15px;
     }
@@ -193,38 +280,23 @@
     }
 
     .group-form button {
-        padding: 10px;
         font-size: 0.9rem;
     }
 
-    /* Adjust card layout */
+    .groups-list {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
     .group-card {
         padding: 15px;
     }
 
     .group-card h3 {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
     }
 
     .group-card p {
         font-size: 0.9rem;
-    }
-
-    /* Adjust heading size */
-    .groups-list h2 {
-        font-size: 1.8rem;
-    }
-
-    .groups-hero-buttons {
-        flex-direction: column; /* Stack buttons vertically */
-        align-items: center; /* Center-align stacked buttons */
-        gap: 15px; /* Reduce gap between buttons for smaller screens */
-    }
-
-    .groups-hero-buttons .hero-button {
-        width: 60%; /* Full-width buttons on smaller screens */
-        max-width: 300px; /* Limit width for readability */
-        padding: 12px 20px; /* Increase padding slightly */
-        font-size: 0.95rem; /* Adjust font size */
     }
 }

@@ -369,18 +369,23 @@ class EventInvite(Resource):
         db.session.add(new_invitation)
         db.session.commit()
 
+        print(f"New Invitation ID: {new_invitation.id}")  # Debugging
+
         # Serialize event and invited user with restricted fields to avoid recursion
         event_data = event.to_dict(rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event'))
         invited_user_data = invited_user.to_dict(rules=('-events', '-groups', '-rsvps', '-sent_event_invitations', '-received_event_invitations'))
 
+        # Add the invitation ID to the response
         return {
             "message": "User invited successfully",
             "invitation": {
+                "id": new_invitation.id,  # Include the invitation ID
                 "event": event_data,
                 "invitee": invited_user_data,
                 "status": new_invitation.status
             }
         }, 201
+
 
 class EventInvitations(Resource):
     @jwt_required()
@@ -413,6 +418,85 @@ class EventInvitations(Resource):
             print(f"Error fetching event invitations: {e}")
             return {"message": "Failed to fetch event invitations", "details": str(e)}, 500
 
+    @jwt_required()
+    def delete(self):
+        try:
+            current_user_id = int(get_jwt_identity())  # Ensure the user is authorized
+            data = request.get_json()  # Get the JSON payload from the request
+            invite_id = data.get('id')  # Extract the invitation ID
+
+            if not invite_id:
+                return {"message": "Invitation ID is required"}, 400
+
+            # Find the invitation by ID and ensure the inviter matches the current user
+            invitation = EventInvitation.query.filter_by(id=invite_id, inviter_id=current_user_id).first()
+
+            if not invitation:
+                return {"message": "Invitation not found or unauthorized"}, 404
+
+            # Delete the invitation
+            db.session.delete(invitation)
+            db.session.commit()
+
+            return {"message": "Invitation canceled successfully", "id": invite_id}, 200
+
+        except Exception as e:
+            print(f"Error canceling event invitation: {e}")
+            return {"message": "Failed to cancel event invitation", "details": str(e)}, 500
+
+
+class EventInvitationsForEvent(Resource):
+    @jwt_required()
+    def get(self, event_id):
+        try:
+            # Ensure the event exists
+            event = Event.query.get_or_404(event_id)
+
+            # Fetch all invitations for the event
+            invitations = EventInvitation.query.filter_by(event_id=event_id).all()
+
+            # Serialize the invitations with invitee and status
+            serialized_invitations = [
+                {
+                    "id": invite.id,
+                    "invitee": {
+                        "id": invite.invitee.id,
+                        "username": invite.invitee.username,
+                    },
+                    "status": invite.status,
+                }
+                for invite in invitations
+            ]
+
+            return serialized_invitations, 200
+
+        except Exception as e:
+            print(f"Error fetching invitations for event {event_id}: {e}")
+            return {"message": "Failed to fetch invitations", "details": str(e)}, 500
+
+
+
+class EventInvitationByCriteria(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            event_id = request.args.get('event_id', type=int)
+            invitee_id = request.args.get('invitee_id', type=int)
+
+            if not event_id or not invitee_id:
+                return {"message": "Both event_id and invitee_id are required"}, 400
+
+            invitation = EventInvitation.query.filter_by(
+                event_id=event_id, invitee_id=invitee_id
+            ).first()
+
+            if not invitation:
+                return {"message": "Invitation not found"}, 404
+
+            return {"id": invitation.id, "status": invitation.status}, 200
+        except Exception as e:
+            return {"message": "Failed to fetch invitation", "details": str(e)}, 500
+
 
 
 class DenyEventInvitation(Resource):
@@ -421,14 +505,19 @@ class DenyEventInvitation(Resource):
         try:
             current_user_id = int(get_jwt_identity())
             invitation = EventInvitation.query.get_or_404(invitation_id)
+
+            # Ensure only the invitee can deny the invitation
             if invitation.invitee_id != current_user_id:
                 return {"message": "You do not have permission to deny this invitation"}, 403
 
-            invitation.status = 'Denied'
+            # Delete the invitation instead of just updating its status
+            db.session.delete(invitation)
             db.session.commit()
-            return {"id": invitation_id}, 200
+
+            return {"message": "Invitation denied and deleted", "id": invitation_id}, 200
         except Exception as e:
             return {"message": f"Error: {str(e)}"}, 500
+
 
 
 class AcceptEventInvitation(Resource):
@@ -584,6 +673,62 @@ class GroupInvitations(Resource):
         ]
         return serialized_invitations, 200
 
+    @jwt_required()
+    def delete(self):
+        try:
+            current_user_id = int(get_jwt_identity())
+            data = request.get_json()
+            if "id" not in data:
+                return {"message": "Invitation ID is required"}, 400
+
+            # Find the invitation by ID and ensure the current user is the inviter
+            invitation = GroupInvitation.query.filter_by(
+                id=data['id'], inviter_id=current_user_id
+            ).first()
+
+            if not invitation:
+                return {"message": "Invitation not found or unauthorized"}, 404
+
+            # Delete the invitation
+            db.session.delete(invitation)
+            db.session.commit()
+
+            return {"message": "Invitation canceled successfully", "id": invitation.id}, 200
+        except Exception as e:
+            return {"message": f"Error: {str(e)}"}, 500
+
+
+class GroupInvitationsForGroup(Resource):
+    @jwt_required()
+    def get(self, group_id):
+        try:
+            # Ensure the group exists
+            group = Group.query.get_or_404(group_id)
+
+            # Fetch all invitations for the group
+            invitations = GroupInvitation.query.filter_by(group_id=group_id).all()
+
+            # Serialize the invitations with invitee and status
+            serialized_invitations = [
+                {
+                    "id": invite.id,
+                    "invitee": {
+                        "id": invite.invitee.id,
+                        "username": invite.invitee.username,
+                    },
+                    "status": invite.status,
+                }
+                for invite in invitations
+            ]
+
+            return serialized_invitations, 200
+
+        except Exception as e:
+            print(f"Error fetching invitations for group {group_id}: {e}")
+            return {"message": "Failed to fetch invitations", "details": str(e)}, 500
+
+
+
 
 class DenyGroupInvitation(Resource):
     @jwt_required()
@@ -727,12 +872,15 @@ api.add_resource(EventList, '/api/events')  # Updated to support search
 api.add_resource(EventDetail, '/api/events/<int:event_id>')
 api.add_resource(EventInvite, '/api/events/<int:event_id>/invite')
 api.add_resource(EventInvitations, '/api/event_invitations')  # For listing event invitations
+api.add_resource(EventInvitationsForEvent, '/api/events/<int:event_id>/invitations')
+api.add_resource(EventInvitationByCriteria, '/api/event_invitations/criteria')
 api.add_resource(DenyEventInvitation, '/api/event_invitations/<int:invitation_id>/deny')  # For denying an event invitation
 api.add_resource(AcceptEventInvitation, '/api/event_invitations/<int:invitation_id>/accept')  # For accepting an event invitation
 api.add_resource(GroupList, '/api/groups')  # Updated to support search
 api.add_resource(GroupDetail, '/api/groups/<int:group_id>')
 api.add_resource(GroupInvite, '/api/groups/<int:group_id>/invite')
 api.add_resource(GroupInvitations, '/api/group_invitations')  # For listing group invitations
+api.add_resource(GroupInvitationsForGroup, '/api/groups/<int:group_id>/invitations')
 api.add_resource(AcceptGroupInvitation, '/api/group_invitations/<int:invitation_id>/accept')  # For accepting a group invitation
 api.add_resource(DenyGroupInvitation, '/api/group_invitations/<int:invitation_id>/deny')  # For denying a group invitation
 api.add_resource(RSVPList, '/api/rsvps')

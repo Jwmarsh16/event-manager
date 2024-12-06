@@ -3,6 +3,8 @@ from config import db
 from sqlalchemy.orm import validates
 import re
 import bcrypt
+from datetime import datetime, timezone
+
 
 # Association tables remain the same
 group_member = db.Table(
@@ -206,6 +208,17 @@ class EventInvitation(db.Model, SerializerMixin):
     inviter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     invitee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="Pending")
+    created_at = db.Column(
+        db.DateTime, 
+        nullable=False, 
+        default=lambda: datetime.now(timezone.utc)  # Use timezone-aware UTC timestamp
+    )
+    updated_at = db.Column(
+        db.DateTime, 
+        nullable=False, 
+        default=lambda: datetime.now(timezone.utc), 
+        onupdate=lambda: datetime.now(timezone.utc)  # Automatically update on modification
+    )
 
     event = db.relationship('Event', back_populates='invitations')
     inviter = db.relationship('User', foreign_keys=[inviter_id], back_populates='sent_event_invitations')

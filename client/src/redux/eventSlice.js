@@ -179,18 +179,16 @@ export const fetchEventInvitations = createAsyncThunk('events/fetchEventInvitati
 // Thunk to accept an event invitation
 export const acceptEventInvite = createAsyncThunk('events/acceptEventInvite', async (invitationId, thunkAPI) => {
   try {
-    console.log(`Accepting event invitation ID: ${invitationId}`);
     const response = await fetchWithCredentials(`/api/event_invitations/${invitationId}/accept`, {
       method: 'PUT',
     });
     if (!response.ok) {
       const errorData = await response.json();
-      console.error(`Error accepting event invitation ID ${invitationId}:`, errorData.message);
       throw new Error(errorData.message || 'Failed to accept event invitation');
     }
-    return await response.json();
+    // Return the invitation ID to remove it from the store
+    return { id: invitationId };
   } catch (error) {
-    console.error(`Accept event invitation ID ${invitationId} failed:`, error.message);
     return thunkAPI.rejectWithValue(error.message || 'Failed to accept event invitation');
   }
 });
@@ -198,18 +196,16 @@ export const acceptEventInvite = createAsyncThunk('events/acceptEventInvite', as
 // Thunk to deny an event invitation
 export const denyEventInvite = createAsyncThunk('events/denyEventInvite', async (invitationId, thunkAPI) => {
   try {
-    console.log(`Denying event invitation ID: ${invitationId}`);
     const response = await fetchWithCredentials(`/api/event_invitations/${invitationId}/deny`, {
       method: 'PUT',
     });
     if (!response.ok) {
       const errorData = await response.json();
-      console.error(`Error denying event invitation ID ${invitationId}:`, errorData.message);
       throw new Error(errorData.message || 'Failed to deny event invitation');
     }
-    return await response.json();
+    // Return the invitation ID to remove it from the store
+    return { id: invitationId };
   } catch (error) {
-    console.error(`Deny event invitation ID ${invitationId} failed:`, error.message);
     return thunkAPI.rejectWithValue(error.message || 'Failed to deny event invitation');
   }
 });

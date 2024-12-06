@@ -8,6 +8,7 @@ import EventDetail from './components/EventDetail';
 import Groups from './pages/Groups';
 import GroupDetail from './components/GroupDetail';
 import GroupInvite from './components/GroupInvite';
+import EventInvite from './components/EventInvite';
 import Invitations from './pages/Invitations';
 import UserProfile from './pages/UserProfile';
 import Home from './pages/Home';
@@ -23,6 +24,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:id" element={<EventDetail />} />
+        <Route path="/events/:id/invite" element={<EventInvite />} />
         <Route path="/groups" element={<Groups />} />
         <Route path="/groups/:id" element={<GroupDetail />} />
         <Route path="/groups/:id/invite" element={<GroupInvite />} />

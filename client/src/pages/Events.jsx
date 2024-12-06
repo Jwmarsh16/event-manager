@@ -131,6 +131,9 @@ function Events() {
               <Link to={`/events/${event.id}`}>{event.name}</Link>
             </h3>
             <p>
+              <strong>Host:</strong> {event.user.username}
+            </p>
+            <p>
               <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
             </p>
             <p>

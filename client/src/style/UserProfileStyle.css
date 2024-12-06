@@ -37,6 +37,27 @@
     font-size: 16px;
 }
 
+/* Profile Avatar */
+.profile-avatar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.avatar-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 3px solid #107880;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatar-img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
 /* Profile Sections */
 .profile-section {
     margin: 30px 0;
@@ -147,5 +168,10 @@
     .delete-button {
         padding: 12px;
         font-size: 14px;
+    }
+
+    .avatar-img {
+        width: 100px;
+        height: 100px;
     }
 }

@@ -3,21 +3,45 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchGroups, createGroup } from '../redux/groupSlice';
 import '../style/GroupsStyle.css';
-import Search from '../components/Search';
 
 function Groups() {
   const dispatch = useDispatch();
-  const groups = useSelector((state) => state.groups.groups);
+  const groups = useSelector((state) => state.groups.groups || []); // Ensure it's an array
   const loading = useSelector((state) => state.groups.loading);
   const error = useSelector((state) => state.groups.error);
 
+  const [filteredGroups, setFilteredGroups] = useState(groups); // Initialize with all groups
+  const [searchQuery, setSearchQuery] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
+  // Fetch all groups on component mount
   useEffect(() => {
     dispatch(fetchGroups());
   }, [dispatch]);
 
+  // Update filtered groups when groups data changes
+  useEffect(() => {
+    setFilteredGroups(groups);
+  }, [groups]);
+
+  // Filter groups dynamically based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredGroups(groups);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredGroups(
+        groups.filter(
+          (group) =>
+            group.name.toLowerCase().includes(query) ||
+            group.description.toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [searchQuery, groups]);
+
+  // Handle group creation
   const handleCreateGroup = async (e) => {
     e.preventDefault();
 
@@ -49,24 +73,21 @@ function Groups() {
         </div>
       </header>
 
-      {/* Search Bar */}
-      <Search />
-
       {/* Create Group Section */}
       <div id="create-group" className="group-form-container">
         <h2>Create a New Group</h2>
         <form onSubmit={handleCreateGroup} className="group-form">
-          <input 
-            type="text" 
-            placeholder="Group Name" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
+          <input
+            type="text"
+            placeholder="Group Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
           />
-          <textarea 
-            placeholder="Description" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
+          <textarea
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             required
           />
           <button type="submit">Create Group</button>
@@ -78,17 +99,33 @@ function Groups() {
       {error && <p className="error-message">Error: {error}</p>}
 
       {/* Groups List Section */}
-      <div id="groups-list" className="groups-list">
+      <div id="groups-list" className="groups-list-container">
         <h2>Explore Groups</h2>
-        {groups.map((group) => (
-          <div key={group.id} className="group-card">
-            <Link to={`/groups/${group.id}`} className="group-link">
-              <h3>{group.name}</h3>
-              <p>{group.description}</p>
-            </Link>
-          </div>
-        ))}
-        {groups.length === 0 && <p>No groups available. Create the first group!</p>}
+        {/* Search Bar */}
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search groups..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        {/* Filtered Groups */}
+        <div className="groups-list">
+          {filteredGroups.length > 0 ? (
+            filteredGroups.map((group) => (
+              <div key={group.id} className="group-card">
+                <Link to={`/groups/${group.id}`} className="group-link">
+                  <h3>{group.name}</h3>
+                  <p>{group.description}</p>
+                </Link>
+              </div>
+            ))
+          ) : (
+            <p>No groups found. Try a different search or create a new group!</p>
+          )}
+        </div>
       </div>
 
       {/* Footer */}

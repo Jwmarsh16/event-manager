@@ -1,0 +1,171 @@
+/* General Event Invite Styling */
+.event-invite {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+  background: linear-gradient(135deg, #f9f9f9, #e3f2fd);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.event-invite h2 {
+  text-align: center;
+  color: #107880;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Search Bar */
+.search-input {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: border 0.3s ease;
+}
+
+.search-input:focus {
+  border: 1px solid #107880;
+  outline: none;
+}
+
+/* User List */
+.user-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+/* User Item */
+.user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, background 0.3s ease;
+  flex-wrap: wrap;
+}
+
+.user-item:hover {
+  background: #f0f8ff;
+  transform: translateY(-5px);
+}
+
+/* User Info Section */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-grow: 1;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #007bff;
+}
+
+.user-name {
+  font-size: 1rem;
+  color: #333;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Invite Button Section */
+.invite-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+}
+
+.invite-button {
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Button Colors */
+.invite-button.invite {
+  background-color: #007bff; /* Blue for "Invite" button */
+}
+
+.invite-button.cancel-invite {
+  background-color: #dc3545; /* Red for "Cancel Invite" button */
+}
+
+.invite-button.invite-accepted {
+  background-color: #28a745; /* Green for "Invite Accepted" button */
+  cursor: not-allowed;
+}
+
+.invite-button.invite-again {
+  background-color: #ffc107; /* Yellow for "Invite Again" button */
+}
+
+/* Button Hover Effects */
+.invite-button:hover:not(:disabled) {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.invite-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Loading and Error Messages */
+.loading,
+.error-message {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #6c757d;
+  margin-top: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .user-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-info {
+    flex-grow: 0;
+    justify-content: center;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .invite-actions {
+    width: 100%;
+    justify-content: center;
+    gap: 10px;
+  }
+}
