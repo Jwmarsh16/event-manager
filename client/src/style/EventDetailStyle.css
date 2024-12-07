@@ -149,17 +149,39 @@
     transform: translateY(-2px);
 }
 
-.rsvp-username {
-    font-weight: bold;
-    color: #333;
+.rsvp-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-.rsvp-status {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+.rsvp-avatar-link, .rsvp-username-link {
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .rsvp-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  
+  .rsvp-username {
     font-weight: bold;
-    text-transform: capitalize;
+  }
+  
+  .rsvp-username-link:hover {
+    text-decoration: underline;
+    color: #007bff;
+  }
+  
+
+.rsvp-status {
+  padding: 5px 10px;
+  border-radius: 5px;
+  text-transform: capitalize;
 }
 
 /* Status Colors */

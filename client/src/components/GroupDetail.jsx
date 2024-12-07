@@ -54,7 +54,16 @@ function GroupDetail() {
             <ul className="members-list">
               {group.members.map((member) => (
                 <li key={member.id} className="member-item">
-                  {member.username}
+                  <Link to={`/profile/${member.id}`} className="member-avatar-link">
+                    <img
+                      src={`https://i.pravatar.cc/50?u=${member.id}`}
+                      alt={`${member.username}'s Avatar`}
+                      className="member-avatar"
+                    />
+                  </Link>
+                  <Link to={`/profile/${member.id}`} className="member-name-link">
+                    {member.username}
+                  </Link>
                 </li>
               ))}
             </ul>

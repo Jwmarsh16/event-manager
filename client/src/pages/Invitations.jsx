@@ -10,6 +10,8 @@ import {
   acceptEventInvite,
   denyEventInvite,
 } from '../redux/eventSlice';
+import { Link } from 'react-router-dom';
+import '../style/InvitationsStyle.css';
 
 function Invitations() {
   const dispatch = useDispatch();
@@ -73,48 +75,104 @@ function Invitations() {
   };
 
   return (
-    <div>
-      <h2>Invitations</h2>
+    <div className="invitations-page">
+      <h2 className="page-title">Invitations</h2>
 
       {/* Group Invitations Section */}
-      <section>
-        <h3>Group Invitations</h3>
-        {groupLoading && <p>Loading group invitations...</p>}
-        {groupError && <p>Error: {groupError}</p>}
+      <section className="invitation-section">
+        <h3 className="section-title">Group Invitations</h3>
+        {groupLoading && <p className="loading-message">Loading group invitations...</p>}
+        {groupError && <p className="error-message">Error: {groupError}</p>}
         {groupInvitations.length > 0 ? (
-          <ul>
+          <ul className="invitation-list">
             {groupInvitations.map((invite) => (
-              <li key={invite.id}>
-                <p>Group: {invite.group?.name || 'Unknown Group'}</p>
-                <p>Invited by: {invite.inviter?.username || 'Unknown User'}</p>
-                <button onClick={() => handleAcceptGroupInvite(invite.id)}>Accept</button>
-                <button onClick={() => handleDenyGroupInvite(invite.id)}>Deny</button>
+              <li key={invite.id} className="invitation-item">
+                <div className="invitation-details">
+                  <p className="invitation-group">
+                    <span className="invitation-label">Group:</span>{' '}
+                    <Link to={`/groups/${invite.group?.id}`} className="group-link">
+                      {invite.group?.name || 'Unknown Group'}
+                    </Link>
+                  </p>
+                  <div className="invitation-inviter">
+                    <img
+                      src={`https://i.pravatar.cc/50?u=${invite.inviter?.id}`}
+                      alt={`${invite.inviter?.username}'s Avatar`}
+                      className="inviter-avatar"
+                    />
+                    <Link to={`/profile/${invite.inviter?.id}`} className="inviter-link">
+                      {invite.inviter?.username || 'Unknown User'}
+                    </Link>
+                  </div>
+                </div>
+                <div className="invitation-actions">
+                  <button
+                    className="invitation-button accept-button"
+                    onClick={() => handleAcceptGroupInvite(invite.id)}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    className="invitation-button deny-button"
+                    onClick={() => handleDenyGroupInvite(invite.id)}
+                  >
+                    Deny
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p>No group invitations found.</p>
+          <p className="no-invitations-message">No group invitations found.</p>
         )}
       </section>
 
       {/* Event Invitations Section */}
-      <section>
-        <h3>Event Invitations</h3>
-        {eventLoading && <p>Loading event invitations...</p>}
-        {eventError && <p>Error: {eventError}</p>}
+      <section className="invitation-section">
+        <h3 className="section-title">Event Invitations</h3>
+        {eventLoading && <p className="loading-message">Loading event invitations...</p>}
+        {eventError && <p className="error-message">Error: {eventError}</p>}
         {eventInvitations.length > 0 ? (
-          <ul>
+          <ul className="invitation-list">
             {eventInvitations.map((invite) => (
-              <li key={invite.id}>
-                <p>Event: {invite.event?.name || 'Unknown Event'}</p>
-                <p>Invited by: {invite.inviter?.username || 'Unknown User'}</p>
-                <button onClick={() => handleAcceptEventInvite(invite.id)}>Accept</button>
-                <button onClick={() => handleDenyEventInvite(invite.id)}>Deny</button>
+              <li key={invite.id} className="invitation-item">
+                <div className="invitation-details">
+                  <p className="invitation-event">
+                    <span className="invitation-label">Event:</span>{' '}
+                    <Link to={`/events/${invite.event?.id}`} className="event-link">
+                      {invite.event?.name || 'Unknown Event'}
+                    </Link>
+                  </p>
+                  <div className="invitation-inviter">
+                    <img
+                      src={`https://i.pravatar.cc/50?u=${invite.inviter?.id}`}
+                      alt={`${invite.inviter?.username}'s Avatar`}
+                      className="inviter-avatar"
+                    />
+                    <Link to={`/profile/${invite.inviter?.id}`} className="inviter-link">
+                      {invite.inviter?.username || 'Unknown User'}
+                    </Link>
+                  </div>
+                </div>
+                <div className="invitation-actions">
+                  <button
+                    className="invitation-button accept-button"
+                    onClick={() => handleAcceptEventInvite(invite.id)}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    className="invitation-button deny-button"
+                    onClick={() => handleDenyEventInvite(invite.id)}
+                  >
+                    Deny
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p>No event invitations found.</p>
+          <p className="no-invitations-message">No event invitations found.</p>
         )}
       </section>
     </div>

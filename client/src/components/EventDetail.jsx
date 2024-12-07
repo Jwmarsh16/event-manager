@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchEventById, deleteEvent } from '../redux/eventSlice'; // Fetch the event
 import { createRSVP } from '../redux/rsvpSlice'; // RSVP actions
+import { fetchUsers } from '../redux/userSlice'; // Fetch users
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../style/EventDetailStyle.css';
@@ -23,12 +24,31 @@ function EventDetail() {
   const currentUserId = useSelector((state) => state.auth.user?.id);
 
   useEffect(() => {
+    // Fetch users if not already loaded
+    if (users.length === 0) {
+      dispatch(fetchUsers());
+    }
+
+    // Fetch event details
     dispatch(fetchEventById(id)).then((action) => {
       if (action.meta.requestStatus === 'fulfilled') {
-        setLocalRSVPs(action.payload.rsvps); // Initialize local RSVP list
+        enrichRSVPs(action.payload.rsvps);
       }
     });
-  }, [dispatch, id]);
+  }, [dispatch, id, users]);
+
+  const enrichRSVPs = (rsvps) => {
+    // Enrich RSVP list with usernames and avatars
+    const enrichedRSVPs = rsvps.map((rsvp) => {
+      const user = users.find((user) => user.id === rsvp.user_id);
+      return {
+        ...rsvp,
+        username: user?.username || 'Unknown',
+        avatar: user ? `https://i.pravatar.cc/50?u=${user.id}` : null,
+      };
+    });
+    setLocalRSVPs(enrichedRSVPs);
+  };
 
   const handleRSVP = async (status) => {
     try {
@@ -39,6 +59,7 @@ function EventDetail() {
         const updatedRSVP = {
           user_id: currentUserId,
           username: users.find((user) => user.id === currentUserId)?.username || 'You',
+          avatar: `https://i.pravatar.cc/50?u=${currentUserId}`,
           status,
         };
         setLocalRSVPs((prevRSVPs) => {
@@ -129,8 +150,19 @@ function EventDetail() {
             {localRSVPs.length > 0 ? (
               <ul>
                 {localRSVPs.map((rsvp) => (
-                  <li key={rsvp.user_id}>
-                    <span className="rsvp-username">{rsvp.username}</span>
+                  <li key={rsvp.user_id} className="rsvp-item">
+                    <Link to={`/profile/${rsvp.user_id}`} className="rsvp-avatar-link">
+                      {rsvp.avatar && (
+                        <img
+                          src={rsvp.avatar}
+                          alt={`${rsvp.username}'s Avatar`}
+                          className="rsvp-avatar"
+                        />
+                      )}
+                    </Link>
+                    <Link to={`/profile/${rsvp.user_id}`} className="rsvp-username-link">
+                      <span className="rsvp-username">{rsvp.username}</span>
+                    </Link>
                     <span className={`rsvp-status ${rsvp.status.toLowerCase()}`}>
                       {rsvp.status}
                     </span>

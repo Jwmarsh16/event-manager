@@ -53,7 +53,7 @@ def seed_rsvps(users, events, num_rsvps=20):
         rsvp = RSVP(
             user_id=random.choice(users).id,
             event_id=random.choice(events).id,
-            status=random.choice(['going', 'not_going', 'maybe']),
+            status=random.choice(['Confirmed', 'Declined', 'maybe']),
         )
         db.session.add(rsvp)
     db.session.commit()

@@ -1,8 +1,8 @@
-"""Update EventInvitation model with timestamps and statuses
+"""Initial migration
 
-Revision ID: f44fbc5589d9
+Revision ID: aa7af00ef4a7
 Revises: 
-Create Date: 2024-12-05 16:24:07.351422
+Create Date: 2024-12-06 14:28:08.157488
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f44fbc5589d9'
+revision = 'aa7af00ef4a7'
 down_revision = None
 branch_labels = None
 depends_on = None

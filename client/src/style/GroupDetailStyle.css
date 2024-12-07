@@ -56,25 +56,55 @@
 .members-list {
     list-style: none;
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
-    justify-content: center;
-}
-
-.member-item {
-    background-color: #e9f2fb;
-    padding: 10px 20px;
-    border-radius: 10px;
-    color: #004085;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s;
-}
-
-.member-item:hover {
-    background-color: #d0e8f6;
-}
+  }
+  
+  .member-item {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+  
+  .member-item:hover {
+    background: #e9f2fb;
+    transform: translateY(-2px);
+  }
+  
+  .member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    transition: transform 0.3s ease;
+  }
+  
+  .member-avatar:hover {
+    transform: scale(1.1);
+  }
+  
+  .member-name-link {
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    color: #007bff;
+  }
+  
+  .member-name-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
+  }
+  
+  .member-avatar-link {
+    display: inline-block;
+  }
+  
 
 /* Invite Button */
 .invite-button {

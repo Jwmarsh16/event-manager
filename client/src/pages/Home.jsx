@@ -45,10 +45,19 @@ function Home() {
         <div className="home-column">
           <h2>Featured Users</h2>
           {users.length > 0 ? (
-            <ul>
+            <ul className="featured-users">
               {users.slice(0, 5).map((user) => (
-                <li key={user.id}>
-                  <Link to={`/profile/${user.id}`}>{user.username}</Link>
+                <li key={user.id} className="featured-user-item">
+                  <Link to={`/profile/${user.id}`} className="user-avatar-link">
+                    <img
+                      src={`https://i.pravatar.cc/50?u=${user.id}`}
+                      alt={`${user.username}'s Avatar`}
+                      className="user-avatar"
+                    />
+                  </Link>
+                  <Link to={`/profile/${user.id}`} className="user-name-link">
+                    {user.username}
+                  </Link>
                 </li>
               ))}
             </ul>

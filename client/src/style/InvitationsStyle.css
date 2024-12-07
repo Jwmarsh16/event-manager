@@ -1,0 +1,264 @@
+/* General Styling */
+.invitations-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #f9f9f9, #e3f2fd);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Page Title */
+.page-title {
+    text-align: center;
+    color: #107880;
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+/* Section Styling */
+.invitation-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    color: #007bff;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+
+
+/* Event Section Styling */
+.invitation-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.event-label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.event-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #343a40;
+  background-color: #f9f9f9;
+  padding: 4px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Invitations List Styling */
+.invitation-details {
+  margin-bottom: 15px;
+}
+
+/* Avatars and Inviter Details */
+.invitation-inviter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inviter-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.inviter-link {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.inviter-link:hover {
+  text-decoration: underline;
+  color: #0056b3;
+}
+
+/* List Styling */
+.invitation-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.invitation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.invitation-item:hover {
+    background: #f0f8ff;
+    transform: translateY(-3px);
+}
+
+/* Invitation Details */
+.invitation-details {
+    flex: 1;
+}
+
+.invitation-header {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.invitation-label {
+    font-weight: bold;
+    color: #333;
+    margin-right: 5px;
+}
+
+.invitation-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* Event Section Styling */
+.invitation-event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .event-label {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #007bff;
+  }
+  
+  .event-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #343a40;
+    background-color: #f9f9f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Event Link Styling */
+.event-link {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #107880;
+    text-decoration: none;
+}
+
+.event-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Group Link Styling */
+.group-link {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #107880;
+    text-decoration: none;
+}
+
+.group-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+
+  /* Invitations List Styling */
+  .invitation-details {
+    margin-bottom: 15px;
+  }
+  
+  /* Avatars and Inviter Details */
+  .invitation-inviter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .inviter-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .inviter-link {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .inviter-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
+  }
+  
+
+/* Buttons */
+.invitation-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.invitation-button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.accept-button {
+    background-color: #28a745;
+    color: white;
+}
+
+.accept-button:hover {
+    background-color: #218838;
+}
+
+.deny-button {
+    background-color: #dc3545;
+    color: white;
+}
+
+.deny-button:hover {
+    background-color: #c82333;
+}
+
+/* Messages */
+.loading-message,
+.error-message,
+.no-invitations-message {
+    text-align: center;
+    font-size: 1rem;
+    color: #6c757d;
+    margin-top: 10px;
+}
