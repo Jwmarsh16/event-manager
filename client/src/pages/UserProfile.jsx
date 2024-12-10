@@ -24,7 +24,7 @@ function UserProfile() {
       )
     ) {
       dispatch(deleteProfile()).then(() => {
-        navigate('/goodbye');
+        navigate('/register');
       });
     }
   };

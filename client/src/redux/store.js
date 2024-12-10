@@ -6,6 +6,7 @@ import rsvpReducer from './rsvpSlice';
 import commentReducer from './commentSlice';
 import userReducer from './userSlice';
 import inviteReducer from './inviteSlice';
+import searchReducer from './searchSlice';
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     comments: commentReducer,
     users: userReducer,
     invites: inviteReducer,
+    search: searchReducer,
   },
 });
 

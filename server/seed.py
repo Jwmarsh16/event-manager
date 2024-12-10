@@ -33,6 +33,22 @@ def seed_groups(users, num_groups=5):
     db.session.commit()
     return groups
 
+
+def seed_group_members(users, groups, num_members_per_group=5):
+    """
+    Seed group members by associating users with groups.
+    Each group will have a random number of members up to num_members_per_group.
+    """
+    for group in groups:
+        # Randomly select users to add as members of the group
+        members = random.sample(users, min(num_members_per_group, len(users)))
+        for member in members:
+            group.members.append(member)  # Use SQLAlchemy relationship to append members
+    db.session.commit()
+    print("Group members seeded successfully!")
+
+
+
 def seed_events(users, num_events=10):
     events = []
     for _ in range(num_events):
@@ -117,6 +133,7 @@ def seed_all():
         groups = seed_groups(users)
         events = seed_events(users)
         
+        seed_group_members(users, groups)  # Add group members
         seed_rsvps(users, events)
         seed_comments(users, events)
         seed_group_invitations(users, groups)
