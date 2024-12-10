@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 from flask_restful import Api
 from flask_cors import CORS
 from dotenv import load_dotenv
+from datetime import timedelta
 import os
 
 load_dotenv()
@@ -44,6 +45,9 @@ app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'  # Path for refresh tok
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True  # always true Enable CSRF protection in production and development
 app.config['JWT_CSRF_CHECK_FORM'] = True  # Ensure forms are checked for CSRF tokens in production
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Secure JWT key from environment
+
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Access tokens expire in 1 hour
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)  # Refresh tokens expire in 7 days
 
 # Optional: CSRF Protection for Flask-WTF
 # Uncomment if using Flask-WTF for forms
