@@ -79,6 +79,7 @@ class Register(Resource):
 
 
 # Login Resource
+# Login Resource
 class Login(Resource):
     def post(self):
         try:
@@ -86,13 +87,13 @@ class Login(Resource):
             data = request.get_json()
 
             # Validate required fields
-            if not all(k in data for k in ("username", "password")):
+            if not all(k in data for k in ("email", "password")):
                 return {"message": "Missing required fields"}, 400
 
-            # Check user credentials
-            user = User.query.filter_by(username=data['username']).first()
+            # Check user credentials using email instead of username
+            user = User.query.filter_by(email=data['email']).first()
             if user is None or not user.check_password(data['password']):
-                return {"message": "Invalid username or password"}, 401
+                return {"message": "Invalid email or password"}, 401
 
             # Generate JWT tokens
             access_token = create_access_token(identity=str(user.id))

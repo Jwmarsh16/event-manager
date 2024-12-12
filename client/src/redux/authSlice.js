@@ -33,11 +33,11 @@ export const registerUser = createAsyncThunk('auth/registerUser', async (userDat
   }
 });
 
-export const login = createAsyncThunk('auth/login', async ({ username, password }, thunkAPI) => {
+export const login = createAsyncThunk('auth/login', async ({ email, password }, thunkAPI) => {
   try {
     const response = await fetchWithCredentials('/api/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     const data = await response.json();
