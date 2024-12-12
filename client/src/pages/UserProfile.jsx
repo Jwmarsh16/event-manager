@@ -12,6 +12,7 @@ function UserProfile() {
   const profile = useSelector((state) => state.users.profile);
   const loading = useSelector((state) => state.users.loading);
   const error = useSelector((state) => state.users.error);
+  const currentUserId = useSelector((state) => state.auth.user?.id); // Get current user's ID from auth state
 
   useEffect(() => {
     dispatch(fetchUserProfileById(id)); // Fetch profile details on mount
@@ -81,10 +82,12 @@ function UserProfile() {
         )}
       </div>
 
-      {/* Delete Profile Button */}
-      <button onClick={handleDelete} className="delete-button">
-        Delete Profile
-      </button>
+      {/* Delete Profile Button - Only show if current user is viewing their own profile */}
+      {currentUserId && currentUserId === parseInt(id) && (
+        <button onClick={handleDelete} className="delete-button">
+          Delete Profile
+        </button>
+      )}
     </div>
   );
 }

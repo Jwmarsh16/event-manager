@@ -5,14 +5,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import '../style/LoginStyle.css'; // Import the new CSS file
 
 function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const response = await dispatch(login({ username, password }));
+    const response = await dispatch(login({ email, password }));
 
     if (response.meta.requestStatus === 'fulfilled') {
       console.log('Login successful');
@@ -30,9 +30,9 @@ function Login() {
           <input
             type="text"
             className="login-input"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <input
             type="password"
