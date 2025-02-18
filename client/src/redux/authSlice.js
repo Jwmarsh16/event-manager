@@ -41,9 +41,11 @@ export const checkAuthStatus = createAsyncThunk(
   'auth/checkAuthStatus',
   async (_, thunkAPI) => {
     try {
-      const response = await fetchWithCredentials('/api/profile');
+      const response = await fetch('/api/profile', { credentials: 'include' });
+
       if (!response.ok) throw new Error('User not authenticated');
-      return await response.json();
+
+      return await response.json(); // Return user data if authenticated
     } catch (error) {
       console.error('Authentication check failed:', error.message);
       thunkAPI.dispatch(logout()); // Log the user out if JWT is expired

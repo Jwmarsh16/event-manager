@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { checkAuthStatus } from './redux/authSlice'; // Import authentication check thunk
 import Navbar from './components/Navbar';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import Events from './pages/Events';
@@ -19,14 +19,17 @@ import Goodbye from './components/Goodbye';
 function App() {
   const dispatch = useDispatch();
 
-  // Ensure CSRF token is fetched on app load & check authentication status
   useEffect(() => {
-    async function fetchCSRFToken() {
-      await fetch('/csrf-token', { credentials: 'include' }); // Ensures CSRF token is stored in cookies
+    async function initializeApp() {
+      try {
+        await fetch('/csrf-token', { credentials: 'include' }); // Fetch CSRF token on app load
+        dispatch(checkAuthStatus()); // Ensure authentication check runs on app load
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      }
     }
 
-    fetchCSRFToken();
-    dispatch(checkAuthStatus()); // Ensures user remains authenticated on page refresh
+    initializeApp();
   }, [dispatch]);
 
   return (

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { logout, resetAuthState } from '../redux/authSlice';
+import { logout, resetAuthState, checkAuthStatus } from '../redux/authSlice';
 import '../style/NavbarStyle.css';
 
 function Navbar() {
@@ -11,15 +11,20 @@ function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Ensure authentication state updates on page load
+  useEffect(() => {
+    dispatch(checkAuthStatus());
+  }, [dispatch]);
+
   const handleLogout = async () => {
     try {
       const result = await dispatch(logout());
 
       if (result.meta.requestStatus === 'fulfilled') {
         dispatch(resetAuthState());
-        await fetch('/csrf-token', { credentials: 'include' }); // Fetch a new CSRF token
+        await fetch('/csrf-token', { credentials: 'include' }); // Fetch a new CSRF token after logout
         navigate('/login');
-        setMenuOpen(false); // Collapse the menu after logout
+        setMenuOpen(false);
       } else {
         console.error('Logout failed:', result.error.message);
       }
