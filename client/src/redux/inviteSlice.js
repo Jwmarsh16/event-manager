@@ -31,11 +31,6 @@ const fetchWithCredentials = async (url, options = {}) => {
     },
   });
 
-  // Optionally, refresh the token after the request if needed
-  if (isModifyingRequest) {
-    await fetchCSRFToken();
-  }
-
   return response;
 };
 

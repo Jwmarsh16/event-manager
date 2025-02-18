@@ -17,32 +17,28 @@ def set_csrf_cookie(response):
     """
     Set a stable CSRF token as an HttpOnly cookie if one isn't already set.
     """
-    # Check if the CSRF token already exists in the request cookies.
-    csrf_token = request.cookies.get("csrf_access_token")
-    if not csrf_token:
-        # Generate a new token if none exists.
+    # Only generate a token if one isn't already present
+    if not request.cookies.get("csrf_access_token"):
         csrf_token = generate_csrf()
-        # Set the cookie with a longer expiration (here, max_age is in seconds; adjust as needed)
         response.set_cookie(
             "csrf_access_token",
             csrf_token,
             httponly=True,
             secure=True,
             samesite="Strict",
-            max_age=3600  # e.g., token lasts for 1 hour; adjust to your session length
+            max_age=3600  # token lifetime set to 1 hour (adjust as needed)
         )
     return response
 
 
+
 @app.route('/api/csrf-token')
 def get_csrf_token():
-    # Return the CSRF token from the cookie if available, or generate one if not.
+    # Return the CSRF token from the cookie; if absent, generate a new one.
     token = request.cookies.get("csrf_access_token")
     if not token:
         token = generate_csrf()
     return jsonify({"csrf_token": token})
-
-
 
 
 
@@ -55,7 +51,6 @@ def validate_csrf_token():
         validate_csrf(request_csrf_token)
     except Exception:
         return {"message": "Invalid CSRF token"}, 403
-
 
 
 
