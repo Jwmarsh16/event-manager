@@ -3,28 +3,37 @@ import Cookies from 'js-cookie';
 
 // Helper function to fetch CSRF token before modifying requests
 const fetchCSRFToken = async () => {
-  await fetch('/csrf-token', { credentials: 'include' }); // Backend should return a CSRF token
+  await fetch('/csrf-token', { credentials: 'include' });
 };
 
 // Helper function for fetch requests with credentials and CSRF token
 const fetchWithCredentials = async (url, options = {}) => {
+  const isModifyingRequest = ['POST', 'PUT', 'DELETE'].includes(options.method);
+
   // Fetch CSRF token before modifying requests
-  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
+  if (isModifyingRequest) {
     await fetchCSRFToken();
   }
 
-  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve the latest CSRF token
-  console.log('CSRF Token Sent:', csrfToken); // Debugging: Log the token being sent
+  const csrfToken = Cookies.get('csrf_access_token') || '';
+  console.log('CSRF Token Sent:', csrfToken); // Debugging
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken, // Attach CSRF token for security
+      'X-CSRF-TOKEN': csrfToken,
       ...options.headers,
     },
   });
+
+  // Fetch a new CSRF token after modifying requests
+  if (isModifyingRequest) {
+    await fetchCSRFToken();
+  }
+
+  return response;
 };
 
 // Thunks for group management

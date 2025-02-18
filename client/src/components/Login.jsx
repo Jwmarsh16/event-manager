@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '../redux/authSlice';
+import { login, checkAuthStatus } from '../redux/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 import '../style/LoginStyle.css';
 
@@ -17,12 +17,13 @@ function Login() {
     const response = await dispatch(login({ email, password }));
 
     if (response.meta.requestStatus === 'fulfilled') {
+      await fetch('/csrf-token', { credentials: 'include' }); // Ensure new CSRF token is set
       await dispatch(checkAuthStatus()); // Ensure UI updates before redirecting
       navigate('/');
     } else {
       console.error(
         'Login failed:',
-        response.error.message || 'Invalid credentials',
+        response.error?.message || 'Invalid credentials',
       );
     }
   };
@@ -52,8 +53,7 @@ function Login() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        {error && <p className="login-error">{error}</p>}{' '}
-        {/* Display login errors */}
+        {error && <p className="login-error">{error}</p>}
         <p className="login-register-text">
           Don't have an account?{' '}
           <Link to="/register" className="login-link">

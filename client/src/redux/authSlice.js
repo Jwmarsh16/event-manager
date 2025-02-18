@@ -1,32 +1,42 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
-// Helper function to fetch CSRF token before modifying requests
+// Helper function to fetch CSRF token before and after modifying requests
 const fetchCSRFToken = async () => {
   await fetch('/csrf-token', { credentials: 'include' });
 };
 
 // Helper function for fetch requests with credentials and CSRF token
 const fetchWithCredentials = async (url, options = {}) => {
-  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
-    await fetchCSRFToken(); // Ensure CSRF token is refreshed
+  const isModifyingRequest = ['POST', 'PUT', 'DELETE'].includes(options.method);
+
+  // Fetch CSRF token before modifying requests
+  if (isModifyingRequest) {
+    await fetchCSRFToken();
   }
 
-  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve latest CSRF token
+  const csrfToken = Cookies.get('csrf_access_token') || '';
   console.log('CSRF Token Sent:', csrfToken); // Debugging
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
-    credentials: 'include', // Ensure cookies are sent with the request
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to headers
+      'X-CSRF-TOKEN': csrfToken,
       ...options.headers,
     },
   });
+
+  // Fetch a new CSRF token after modifying requests
+  if (isModifyingRequest) {
+    await fetchCSRFToken();
+  }
+
+  return response;
 };
 
-// 🔍 Check Authentication Status (Ensures User is Authenticated on Page Load)
+// 🔍 Check Authentication Status
 export const checkAuthStatus = createAsyncThunk(
   'auth/checkAuthStatus',
   async (_, thunkAPI) => {
@@ -47,8 +57,6 @@ export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async (userData, thunkAPI) => {
     try {
-      await fetchCSRFToken(); // Ensure CSRF token is refreshed
-
       const response = await fetchWithCredentials('/api/register', {
         method: 'POST',
         body: JSON.stringify(userData),
@@ -68,8 +76,6 @@ export const login = createAsyncThunk(
   'auth/login',
   async ({ email, password }, thunkAPI) => {
     try {
-      await fetchCSRFToken(); // Ensure CSRF token is refreshed
-
       const response = await fetchWithCredentials('/api/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
@@ -87,8 +93,6 @@ export const login = createAsyncThunk(
 // 🔐 Logout User (CSRF Protected)
 export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
   try {
-    await fetchCSRFToken(); // Ensure CSRF token is refreshed
-
     const response = await fetchWithCredentials('/api/logout', {
       method: 'POST',
     });
@@ -106,8 +110,6 @@ export const deleteProfile = createAsyncThunk(
   'auth/deleteProfile',
   async (_, thunkAPI) => {
     try {
-      await fetchCSRFToken(); // Ensure CSRF token is refreshed
-
       const response = await fetchWithCredentials('/api/profile/delete', {
         method: 'DELETE',
       });

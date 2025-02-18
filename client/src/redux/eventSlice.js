@@ -8,22 +8,32 @@ const fetchCSRFToken = async () => {
 
 // Helper function for fetch requests with credentials and CSRF token
 const fetchWithCredentials = async (url, options = {}) => {
-  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
-    await fetchCSRFToken(); // Ensure CSRF token is refreshed before modifying requests
+  const isModifyingRequest = ['POST', 'PUT', 'DELETE'].includes(options.method);
+
+  // Fetch CSRF token before modifying requests
+  if (isModifyingRequest) {
+    await fetchCSRFToken();
   }
 
-  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve the latest CSRF token
-  console.log('CSRF Token Sent:', csrfToken); // Debugging: Log the token being sent
+  const csrfToken = Cookies.get('csrf_access_token') || '';
+  console.log('CSRF Token Sent:', csrfToken); // Debugging
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
-    credentials: 'include', // Ensure cookies are sent with the request
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to the headers
+      'X-CSRF-TOKEN': csrfToken,
       ...options.headers,
     },
   });
+
+  // Fetch a new CSRF token after modifying requests
+  if (isModifyingRequest) {
+    await fetchCSRFToken();
+  }
+
+  return response;
 };
 
 // 🔍 Fetch all events
