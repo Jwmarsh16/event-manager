@@ -17,7 +17,7 @@ function Login() {
     const response = await dispatch(login({ email, password }));
 
     if (response.meta.requestStatus === 'fulfilled') {
-      await fetch('/csrf-token', { credentials: 'include' }); // Ensure new CSRF token is set
+      await fetch('/api/csrf-token', { credentials: 'include' }); // Ensure new CSRF token is set
       await dispatch(checkAuthStatus()); // Ensure UI updates before redirecting
       navigate('/');
     } else {

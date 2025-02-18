@@ -1,21 +1,24 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
-// Helper function to fetch CSRF token before and after modifying requests
+// Helper function to fetch CSRF token from the backend endpoint
 const fetchCSRFToken = async () => {
-  await fetch('/csrf-token', { credentials: 'include' });
+  const response = await fetch('/api/csrf-token', { credentials: 'include' });
+  const data = await response.json();
+  return data.csrf_token;
 };
 
 // Helper function for fetch requests with credentials and CSRF token
 const fetchWithCredentials = async (url, options = {}) => {
   const isModifyingRequest = ['POST', 'PUT', 'DELETE'].includes(options.method);
 
+  let csrfToken = '';
+
   // Fetch CSRF token before modifying requests
   if (isModifyingRequest) {
-    await fetchCSRFToken();
+    csrfToken = await fetchCSRFToken();
   }
 
-  const csrfToken = Cookies.get('csrf_access_token') || '';
   console.log('CSRF Token Sent:', csrfToken); // Debugging
 
   const response = await fetch(url, {
@@ -28,7 +31,7 @@ const fetchWithCredentials = async (url, options = {}) => {
     },
   });
 
-  // Fetch a new CSRF token after modifying requests
+  // Optionally, refresh the token after the request if needed
   if (isModifyingRequest) {
     await fetchCSRFToken();
   }

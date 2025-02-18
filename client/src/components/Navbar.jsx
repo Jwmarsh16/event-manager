@@ -22,7 +22,7 @@ function Navbar() {
 
       if (result.meta.requestStatus === 'fulfilled') {
         dispatch(resetAuthState());
-        await fetch('/csrf-token', { credentials: 'include' }); // Fetch a new CSRF token after logout
+        await fetch('/api/csrf-token', { credentials: 'include' }); // Fetch a new CSRF token after logout
         navigate('/login');
         setMenuOpen(false);
       } else {

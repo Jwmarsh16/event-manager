@@ -21,15 +21,27 @@ def set_csrf_cookie(response):
     response.set_cookie("csrf_access_token", csrf_token, httponly=True, secure=True, samesite="Strict")
     return response
 
+@app.route('/api/csrf-token')
+def get_csrf_token():
+    # Try to get the token from the cookie; if missing, generate a new one.
+    token = request.cookies.get("csrf_access_token")
+    if not token:
+        token = generate_csrf()
+    return jsonify({"csrf_token": token})
+
+
 
 
 def validate_csrf_token():
-    """
-    Validate CSRF token from HttpOnly cookie.
-    """
-    csrf_token = request.cookies.get("csrf_access_token")  # Get token from cookie
-    if not csrf_token or not validate_csrf(csrf_token):
+    request_csrf_token = request.headers.get('X-CSRF-TOKEN')
+    cookie_csrf_token = request.cookies.get("csrf_access_token")
+    if not request_csrf_token or request_csrf_token != cookie_csrf_token:
         return {"message": "Invalid CSRF token"}, 403
+    try:
+        validate_csrf(request_csrf_token)
+    except Exception:
+        return {"message": "Invalid CSRF token"}, 403
+
 
 
 

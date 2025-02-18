@@ -23,7 +23,14 @@ function App() {
   useEffect(() => {
     async function initializeApp() {
       try {
-        await fetch('/csrf-token', { credentials: 'include' }); // Fetch CSRF token on app load
+        const csrfResponse = await fetch('/api/csrf-token', {
+          credentials: 'include',
+        });
+
+        if (!csrfResponse.ok) {
+          throw new Error('Failed to fetch CSRF token');
+        }
+
         dispatch(checkAuthStatus()); // Ensure authentication check runs on app load
       } catch (error) {
         console.error('Error initializing app:', error);
