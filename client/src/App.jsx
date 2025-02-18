@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { checkAuthStatus } from './slices/authSlice'; // Import authentication check thunk
+import { checkAuthStatus } from './redux/authSlice'; // Import authentication check thunk
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import Register from './components/Register';
