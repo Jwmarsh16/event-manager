@@ -15,19 +15,33 @@ jwt = JWTManager(app)
 @app.after_request
 def set_csrf_cookie(response):
     """
-    Set CSRF token as an HttpOnly cookie after every request.
+    Set a stable CSRF token as an HttpOnly cookie if one isn't already set.
     """
-    csrf_token = generate_csrf()
-    response.set_cookie("csrf_access_token", csrf_token, httponly=True, secure=True, samesite="Strict")
+    # Check if the CSRF token already exists in the request cookies.
+    csrf_token = request.cookies.get("csrf_access_token")
+    if not csrf_token:
+        # Generate a new token if none exists.
+        csrf_token = generate_csrf()
+        # Set the cookie with a longer expiration (here, max_age is in seconds; adjust as needed)
+        response.set_cookie(
+            "csrf_access_token",
+            csrf_token,
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            max_age=3600  # e.g., token lasts for 1 hour; adjust to your session length
+        )
     return response
+
 
 @app.route('/api/csrf-token')
 def get_csrf_token():
-    # Try to get the token from the cookie; if missing, generate a new one.
+    # Return the CSRF token from the cookie if available, or generate one if not.
     token = request.cookies.get("csrf_access_token")
     if not token:
         token = generate_csrf()
     return jsonify({"csrf_token": token})
+
 
 
 
