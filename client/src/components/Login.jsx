@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../redux/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 import '../style/LoginStyle.css';
@@ -9,16 +9,21 @@ function Login() {
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { loading, error } = useSelector((state) => state.auth); // Track loading & errors
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     const response = await dispatch(login({ email, password }));
 
     if (response.meta.requestStatus === 'fulfilled') {
-      console.log('Login successful');
+      await dispatch(checkAuthStatus()); // Ensure UI updates before redirecting
       navigate('/');
     } else {
-      console.error('Login failed', response.error);
+      console.error(
+        'Login failed:',
+        response.error.message || 'Invalid credentials',
+      );
     }
   };
 
@@ -43,10 +48,17 @@ function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <button type="submit" className="login-button">Login</button>
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
         </form>
+        {error && <p className="login-error">{error}</p>}{' '}
+        {/* Display login errors */}
         <p className="login-register-text">
-          Don't have an account? <Link to="/register" className="login-link">Register here</Link>
+          Don't have an account?{' '}
+          <Link to="/register" className="login-link">
+            Register here
+          </Link>
         </p>
       </div>
     </div>

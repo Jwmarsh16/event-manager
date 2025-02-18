@@ -1,63 +1,82 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
-const fetchWithCredentials = (url, options = {}) => {
-    const csrfToken = Cookies.get('csrf_access_token');
-    return fetch(url, {
-      ...options,
-      credentials: 'include', // Ensure cookies are sent with the request
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': csrfToken, // Add CSRF token to the headers
-        ...options.headers,
-      },
-    });
-  };
+// Helper function to fetch CSRF token before modifying requests
+const fetchCSRFToken = async () => {
+  await fetch('/csrf-token', { credentials: 'include' });
+};
 
-// Thunks for search
-export const searchUsers = createAsyncThunk('search/searchUsers', async (query, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials(`/api/users?q=${encodeURIComponent(query)}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to search users');
-    }
-    return await response.json();
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to search users');
+// Helper function for fetch requests with credentials and CSRF token
+const fetchWithCredentials = async (url, options = {}) => {
+  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
+    await fetchCSRFToken(); // Ensure CSRF token is refreshed
   }
-});
 
-export const searchGroups = createAsyncThunk('search/searchGroups', async (query, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials(`/api/groups?q=${encodeURIComponent(query)}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to search groups');
+  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve latest CSRF token
+  console.log('CSRF Token Sent:', csrfToken); // Debugging
+
+  return fetch(url, {
+    ...options,
+    credentials: 'include', // Ensure cookies are sent with the request
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to headers
+      ...options.headers,
+    },
+  });
+};
+
+// 🔍 Search Users (No CSRF Required, Read-Only)
+export const searchUsers = createAsyncThunk(
+  'search/searchUsers',
+  async (query, thunkAPI) => {
+    try {
+      const response = await fetchWithCredentials(
+        `/api/users?q=${encodeURIComponent(query)}`,
+      );
+      if (!response.ok) throw new Error('Failed to search users');
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await response.json();
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to search groups');
-  }
-});
+  },
+);
 
-export const searchEvents = createAsyncThunk('search/searchEvents', async (query, thunkAPI) => {
-  try {
-    console.log(`Searching events with query: "${query}"`);
-    const response = await fetchWithCredentials(`/api/events?q=${encodeURIComponent(query)}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error searching events:', errorData.message);
-      throw new Error(errorData.message || 'Failed to search events');
+// 🔍 Search Groups (No CSRF Required, Read-Only)
+export const searchGroups = createAsyncThunk(
+  'search/searchGroups',
+  async (query, thunkAPI) => {
+    try {
+      const response = await fetchWithCredentials(
+        `/api/groups?q=${encodeURIComponent(query)}`,
+      );
+      if (!response.ok) throw new Error('Failed to search groups');
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await response.json();
-  } catch (error) {
-    console.error('Search events failed:', error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to search events');
-  }
-});
+  },
+);
 
-// Search slice
+// 🔍 Search Events (No CSRF Required, Read-Only)
+export const searchEvents = createAsyncThunk(
+  'search/searchEvents',
+  async (query, thunkAPI) => {
+    try {
+      console.log(`Searching events with query: "${query}"`);
+      const response = await fetchWithCredentials(
+        `/api/events?q=${encodeURIComponent(query)}`,
+      );
+      if (!response.ok) throw new Error('Failed to search events');
+      return await response.json();
+    } catch (error) {
+      console.error('Search events failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
+
+// Search Slice
 const searchSlice = createSlice({
   name: 'search',
   initialState: {
@@ -80,7 +99,7 @@ const searchSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Handle user search
+    // 🔍 Handle User Search
     builder
       .addCase(searchUsers.pending, (state) => {
         state.loading = true;
@@ -95,7 +114,7 @@ const searchSlice = createSlice({
         state.error = action.payload || 'Failed to search users';
       });
 
-    // Handle group search
+    // 🔍 Handle Group Search
     builder
       .addCase(searchGroups.pending, (state) => {
         state.loading = true;
@@ -110,7 +129,7 @@ const searchSlice = createSlice({
         state.error = action.payload || 'Failed to search groups';
       });
 
-    // Handle event search
+    // 🔍 Handle Event Search
     builder
       .addCase(searchEvents.pending, (state) => {
         state.loading = true;

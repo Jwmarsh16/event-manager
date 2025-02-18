@@ -43,6 +43,7 @@ app.config['JWT_COOKIE_HTTPONLY'] = True  # Prevents JavaScript from accessing c
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'  # Path for access tokens
 app.config['JWT_REFRESH_COOKIE_PATH'] = '/token/refresh'  # Path for refresh tokens
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True  # always true Enable CSRF protection in production and development
+app.config['JWT_CSRF_IN_COOKIES'] = True  # Ensures CSRF token is stored and validated in cookies
 app.config['JWT_CSRF_CHECK_FORM'] = True  # Ensure forms are checked for CSRF tokens in production
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Secure JWT key from environment
 

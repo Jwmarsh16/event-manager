@@ -1,95 +1,105 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
+// Helper function to fetch CSRF token before modifying requests
+const fetchCSRFToken = async () => {
+  await fetch('/csrf-token', { credentials: 'include' });
+};
+
 // Helper function for fetch requests with credentials and CSRF token
-const fetchWithCredentials = (url, options = {}) => {
-  const csrfToken = Cookies.get('csrf_access_token') || ''; // Handle missing cookies gracefully
+const fetchWithCredentials = async (url, options = {}) => {
+  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
+    await fetchCSRFToken(); // Ensure CSRF token is refreshed
+  }
+
+  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve latest CSRF token
+  console.log('CSRF Token Sent:', csrfToken); // Debugging
+
   return fetch(url, {
     ...options,
     credentials: 'include', // Ensure cookies are sent with the request
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken, // Include CSRF token
+      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to headers
       ...options.headers,
     },
   });
 };
 
-// Thunk to invite a user to an event
+// 🔐 Invite User to an Event (CSRF Protected)
 export const inviteUserToEvent = createAsyncThunk(
   'invites/inviteUserToEvent',
   async ({ eventId, invitedUserId }, thunkAPI) => {
     try {
-      const response = await fetchWithCredentials(`/api/events/${eventId}/invite`, {
-        method: 'POST',
-        body: JSON.stringify({ invited_user_id: invitedUserId }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to invite user');
-      }
+      console.log('Inviting user to event:', eventId, invitedUserId);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
+
+      const response = await fetchWithCredentials(
+        `/api/events/${eventId}/invite`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ invited_user_id: invitedUserId }),
+        },
+      );
+
+      if (!response.ok) throw new Error('Failed to invite user');
 
       const data = await response.json();
-      console.log("Backend Response Data:", data); // Debugging
-      return data.invitation; // Return the `invitation` object directly
+      return data.invitation;
     } catch (error) {
-      console.error("Invite User Error:", error.message); // Debugging
-      return thunkAPI.rejectWithValue(error.message || 'Failed to invite user');
+      console.error('Invite User Error:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-  }
+  },
 );
 
-// Thunk to cancel an invitation
+// 🔐 Cancel an Event Invitation (CSRF Protected)
 export const cancelEventInvite = createAsyncThunk(
   'invites/cancelEventInvite',
   async ({ id }, thunkAPI) => {
     try {
-      console.log("Cancel Event Invite Payload:", { id }); // Debugging
-      const response = await fetchWithCredentials(`/api/event_invitations`, {
+      console.log('Canceling event invite ID:', id);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
+
+      const response = await fetchWithCredentials('/api/event_invitations', {
         method: 'DELETE',
-        body: JSON.stringify({ id }), // Send the invitation ID
+        body: JSON.stringify({ id }),
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to cancel invitation');
-      }
-      const data = await response.json();
-      console.log("Backend Cancel Response Data:", data); // Debugging
-      return data; // Return the ID of the canceled invite
+
+      if (!response.ok) throw new Error('Failed to cancel invitation');
+
+      return await response.json(); // Return the ID of the canceled invite
     } catch (error) {
-      console.error("Cancel Event Invite Error:", error.message); // Debugging
-      return thunkAPI.rejectWithValue(error.message || 'Failed to cancel invitation');
+      console.error('Cancel Event Invite Error:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-  }
+  },
 );
 
-// Thunk to fetch all invitations for a specific event
+// 🔍 Fetch Invitations for a Specific Event (No CSRF Required, Read-Only)
 export const fetchInvitationsForEvent = createAsyncThunk(
   'invites/fetchInvitationsForEvent',
   async (eventId, thunkAPI) => {
     try {
-      console.log(`Fetching invitations for event ID: ${eventId}`);
-      const response = await fetchWithCredentials(`/api/events/${eventId}/invitations`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching invitations:', errorData.message);
-        throw new Error(errorData.message || 'Failed to fetch invitations');
-      }
-      return await response.json(); // Return the list of invitations
+      console.log('Fetching invitations for event:', eventId);
+      const response = await fetchWithCredentials(
+        `/api/events/${eventId}/invitations`,
+      );
+      if (!response.ok) throw new Error('Failed to fetch invitations');
+      return await response.json();
     } catch (error) {
       console.error('Fetch invitations failed:', error.message);
-      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch invitations');
+      return thunkAPI.rejectWithValue(error.message);
     }
-  }
+  },
 );
 
-
-// Slice for managing invitations
+// Invite Slice
 const inviteSlice = createSlice({
   name: 'invites',
   initialState: {
     invites: [],
-    eventInvitations: [], // Store invitations for the current event
+    eventInvitations: [],
     loading: false,
     error: null,
     successMessage: null,
@@ -104,7 +114,7 @@ const inviteSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Invite User to Event
+      // 🔐 Invite User to Event (CSRF Protected)
       .addCase(inviteUserToEvent.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -112,48 +122,42 @@ const inviteSlice = createSlice({
       })
       .addCase(inviteUserToEvent.fulfilled, (state, action) => {
         state.loading = false;
-        console.log("Invite User Fulfilled Payload:", action.payload); // Debugging
-        state.successMessage = 'User invited successfully'; // Set a fixed success message
-        state.invites.push(action.payload); // Add the new invitation to the list
+        state.successMessage = 'User invited successfully';
+        state.invites.push(action.payload);
       })
       .addCase(inviteUserToEvent.rejected, (state, action) => {
         state.loading = false;
-        console.error("Invite User Rejected:", action.payload); // Debugging
         state.error = action.payload || 'Failed to invite user';
       })
 
-      // Cancel Invitation
+      // 🔐 Cancel Event Invitation (CSRF Protected)
       .addCase(cancelEventInvite.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(cancelEventInvite.fulfilled, (state, action) => {
         state.loading = false;
-        console.log("Canceled Invitation Fulfilled Payload:", action.payload); // Debugging
-        state.successMessage = 'Invitation canceled successfully'; // Set a fixed success message
+        state.successMessage = 'Invitation canceled successfully';
 
-        // Safeguard: Ensure `action.payload` has a valid structure
         if (action.payload && action.payload.id) {
           state.invites = state.invites.filter(
-            (invite) => invite.id !== action.payload.id // Remove the canceled invite
+            (invite) => invite.id !== action.payload.id,
           );
-        } else {
-          console.error("Invalid payload structure in cancelEventInvite:", action.payload);
         }
       })
       .addCase(cancelEventInvite.rejected, (state, action) => {
         state.loading = false;
-        console.error("Cancel Invitation Rejected:", action.payload); // Debugging
         state.error = action.payload || 'Failed to cancel invitation';
       })
-      // Fetch Invitations for Event
+
+      // 🔍 Fetch Invitations for Event (No CSRF Required, Read-Only)
       .addCase(fetchInvitationsForEvent.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchInvitationsForEvent.fulfilled, (state, action) => {
         state.loading = false;
-        state.eventInvitations = action.payload; // Update event invitations
+        state.eventInvitations = action.payload;
       })
       .addCase(fetchInvitationsForEvent.rejected, (state, action) => {
         state.loading = false;

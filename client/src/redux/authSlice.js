@@ -1,86 +1,127 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
-// Helper function to handle fetch requests with credentials and CSRF token
-const fetchWithCredentials = (url, options = {}) => {
-  const csrfToken = Cookies.get('csrf_access_token');
+// Helper function to fetch CSRF token before modifying requests
+const fetchCSRFToken = async () => {
+  await fetch('/csrf-token', { credentials: 'include' });
+};
+
+// Helper function for fetch requests with credentials and CSRF token
+const fetchWithCredentials = async (url, options = {}) => {
+  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
+    await fetchCSRFToken(); // Ensure CSRF token is refreshed
+  }
+
+  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve latest CSRF token
+  console.log('CSRF Token Sent:', csrfToken); // Debugging
+
   return fetch(url, {
     ...options,
     credentials: 'include', // Ensure cookies are sent with the request
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to the headers
+      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to headers
       ...options.headers,
     },
   });
 };
 
+// 🔍 Check Authentication Status (Ensures User is Authenticated on Page Load)
+export const checkAuthStatus = createAsyncThunk(
+  'auth/checkAuthStatus',
+  async (_, thunkAPI) => {
+    try {
+      const response = await fetchWithCredentials('/api/profile');
+      if (!response.ok) throw new Error('User not authenticated');
+      return await response.json();
+    } catch (error) {
+      console.error('Authentication check failed:', error.message);
+      thunkAPI.dispatch(logout()); // Log the user out if JWT is expired
+      return thunkAPI.rejectWithValue(null);
+    }
+  },
+);
 
-// Thunks for login, registration, logout, and profile deletion
-export const registerUser = createAsyncThunk('auth/registerUser', async (userData, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials('/api/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+// 🔐 Register User (CSRF Protected)
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (userData, thunkAPI) => {
+    try {
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Failed to register');
+      const response = await fetchWithCredentials('/api/register', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
 
-    return { user: data.user };
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to register');
-  }
-});
+      if (!response.ok) throw new Error('Failed to register');
 
-export const login = createAsyncThunk('auth/login', async ({ email, password }, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Failed to login');
+// 🔐 Login User (CSRF Protected)
+export const login = createAsyncThunk(
+  'auth/login',
+  async ({ email, password }, thunkAPI) => {
+    try {
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
-    return { id: data.user.id };
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to login');
-  }
-});
+      const response = await fetchWithCredentials('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
 
+      if (!response.ok) throw new Error('Failed to login');
+
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
+
+// 🔐 Logout User (CSRF Protected)
 export const logout = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
   try {
-    // Use js-cookie to retrieve the CSRF token from cookies
-    const csrfToken = Cookies.get('csrf_access_token'); // Adjust the cookie name as needed
+    await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
     const response = await fetchWithCredentials('/api/logout', {
       method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': csrfToken, // Include CSRF token in the headers
-      },
     });
 
     if (!response.ok) throw new Error('Failed to logout');
+
     return true;
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to logout');
+    return thunkAPI.rejectWithValue(error.message);
   }
 });
 
-export const deleteProfile = createAsyncThunk('auth/deleteProfile', async (_, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials('/api/profile/delete', {
-      method: 'DELETE',
-    });
+// 🔐 Delete Profile (CSRF Protected)
+export const deleteProfile = createAsyncThunk(
+  'auth/deleteProfile',
+  async (_, thunkAPI) => {
+    try {
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
-    if (!response.ok) throw new Error('Failed to delete profile');
-    return await response.json();
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to delete profile');
-  }
-});
+      const response = await fetchWithCredentials('/api/profile/delete', {
+        method: 'DELETE',
+      });
 
+      if (!response.ok) throw new Error('Failed to delete profile');
+
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
+
+// Auth Slice
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -101,6 +142,23 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // 🔍 Check Authentication Status
+      .addCase(checkAuthStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(checkAuthStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload;
+      })
+      .addCase(checkAuthStatus.rejected, (state) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+      })
+
+      // 🔐 Register User (CSRF Protected)
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -113,6 +171,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload || 'Failed to register';
       })
+
+      // 🔐 Delete Profile (CSRF Protected)
       .addCase(deleteProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -126,6 +186,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload || 'Failed to delete profile';
       })
+
+      // 🔐 Login User (CSRF Protected)
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -133,12 +195,14 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = { id: action.payload.id };
+        state.user = action.payload;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to login';
       })
+
+      // 🔐 Logout User (CSRF Protected)
       .addCase(logout.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -156,5 +220,4 @@ const authSlice = createSlice({
 });
 
 export const { setUser, resetAuthState } = authSlice.actions;
-
 export default authSlice.reducer;

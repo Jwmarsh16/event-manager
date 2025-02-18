@@ -14,15 +14,17 @@ function Navbar() {
   const handleLogout = async () => {
     try {
       const result = await dispatch(logout());
+
       if (result.meta.requestStatus === 'fulfilled') {
         dispatch(resetAuthState());
+        await fetch('/csrf-token', { credentials: 'include' }); // Fetch a new CSRF token
         navigate('/login');
         setMenuOpen(false); // Collapse the menu after logout
       } else {
-        console.error('Logout failed');
+        console.error('Logout failed:', result.error.message);
       }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Logout failed:', error.message);
     }
   };
 
@@ -47,42 +49,77 @@ function Navbar() {
         </li>
         {isAuthenticated ? (
           <>
-            <li className={window.location.pathname === `/profile/${currentUserId}` ? 'active' : ''}>
-              <Link to={`/profile/${currentUserId}`} className="navbar-button" onClick={closeMenu}>
+            <li
+              className={
+                window.location.pathname === `/profile/${currentUserId}`
+                  ? 'active'
+                  : ''
+              }
+            >
+              <Link
+                to={`/profile/${currentUserId}`}
+                className="navbar-button"
+                onClick={closeMenu}
+              >
                 Profile
               </Link>
             </li>
-            <li className={window.location.pathname === '/events' ? 'active' : ''}>
+            <li
+              className={window.location.pathname === '/events' ? 'active' : ''}
+            >
               <Link to="/events" className="navbar-button" onClick={closeMenu}>
                 Events
               </Link>
             </li>
-            <li className={window.location.pathname === '/groups' ? 'active' : ''}>
+            <li
+              className={window.location.pathname === '/groups' ? 'active' : ''}
+            >
               <Link to="/groups" className="navbar-button" onClick={closeMenu}>
                 Groups
               </Link>
             </li>
-            
-            <li className={window.location.pathname === '/invitations' ? 'active' : ''}>
-              <Link to="/invitations" className="navbar-button" onClick={closeMenu}>
+            <li
+              className={
+                window.location.pathname === '/invitations' ? 'active' : ''
+              }
+            >
+              <Link
+                to="/invitations"
+                className="navbar-button"
+                onClick={closeMenu}
+              >
                 Invitations
               </Link>
             </li>
             <li>
-              <button onClick={handleLogout} className="navbar-button">
+              <button
+                onClick={handleLogout}
+                className="navbar-button logout-button"
+                disabled={!isAuthenticated}
+              >
                 Logout
               </button>
             </li>
           </>
         ) : (
           <>
-            <li className={window.location.pathname === '/login' ? 'active' : ''}>
+            <li
+              className={window.location.pathname === '/login' ? 'active' : ''}
+            >
               <Link to="/login" className="navbar-button" onClick={closeMenu}>
                 Login
               </Link>
             </li>
-            <li className={window.location.pathname === '/register' ? 'active' : ''}>
-              <Link to="/register" className="navbar-button" onClick={closeMenu}>
+            <li
+              className={
+                window.location.pathname === '/register' ? 'active' : ''
+              }
+            >
+              <Link
+                to="/register"
+                className="navbar-button"
+                onClick={closeMenu}
+              >
                 Register
               </Link>
             </li>

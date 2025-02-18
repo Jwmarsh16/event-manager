@@ -1,67 +1,88 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
+// Helper function to fetch CSRF token before modifying requests
+const fetchCSRFToken = async () => {
+  await fetch('/csrf-token', { credentials: 'include' });
+};
+
 // Helper function for fetch requests with credentials and CSRF token
-const fetchWithCredentials = (url, options = {}) => {
-  const csrfToken = Cookies.get('csrf_access_token') || ''; // Gracefully handle missing CSRF token
+const fetchWithCredentials = async (url, options = {}) => {
+  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
+    await fetchCSRFToken(); // Ensure CSRF token is refreshed
+  }
+
+  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve latest CSRF token
+  console.log('CSRF Token Sent:', csrfToken); // Debugging
+
   return fetch(url, {
     ...options,
     credentials: 'include', // Ensure cookies are sent with the request
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to the headers
+      'X-CSRF-TOKEN': csrfToken, // Add CSRF token to headers
       ...options.headers,
     },
   });
 };
 
-// Thunk for fetching RSVPs for a specific event
-export const fetchRSVPs = createAsyncThunk('rsvps/fetchRSVPs', async (eventId, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials(`/api/events/${eventId}/rsvps`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch RSVPs');
+// 🔍 Fetch RSVPs for a specific event (No CSRF Required, Read-Only)
+export const fetchRSVPs = createAsyncThunk(
+  'rsvps/fetchRSVPs',
+  async (eventId, thunkAPI) => {
+    try {
+      const response = await fetchWithCredentials(
+        `/api/events/${eventId}/rsvps`,
+      );
+      if (!response.ok) throw new Error('Failed to fetch RSVPs');
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await response.json();
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to fetch RSVPs');
-  }
-});
+  },
+);
 
-// Thunk for creating a new RSVP
-export const createRSVP = createAsyncThunk('rsvps/createRSVP', async (rsvpData, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials('/api/rsvps', {
-      method: 'POST',
-      body: JSON.stringify(rsvpData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to submit RSVP');
-    }
-    return await response.json();
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to submit RSVP');
-  }
-});
+// 🔐 Create a new RSVP (CSRF Protected)
+export const createRSVP = createAsyncThunk(
+  'rsvps/createRSVP',
+  async (rsvpData, thunkAPI) => {
+    try {
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
-// Thunk for updating an RSVP
-export const updateRSVP = createAsyncThunk('rsvps/updateRSVP', async (rsvpData, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials('/api/rsvps', {
-      method: 'PUT',
-      body: JSON.stringify(rsvpData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to update RSVP');
+      const response = await fetchWithCredentials('/api/rsvps', {
+        method: 'POST',
+        body: JSON.stringify(rsvpData),
+      });
+
+      if (!response.ok) throw new Error('Failed to submit RSVP');
+
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await response.json();
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to update RSVP');
-  }
-});
+  },
+);
+
+// 🔐 Update an RSVP (CSRF Protected)
+export const updateRSVP = createAsyncThunk(
+  'rsvps/updateRSVP',
+  async (rsvpData, thunkAPI) => {
+    try {
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
+
+      const response = await fetchWithCredentials('/api/rsvps', {
+        method: 'PUT',
+        body: JSON.stringify(rsvpData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update RSVP');
+
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
 
 // RSVP slice
 const rsvpSlice = createSlice({
@@ -81,7 +102,7 @@ const rsvpSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch RSVPs
+      // 🔍 Fetch RSVPs for Event
       .addCase(fetchRSVPs.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -95,7 +116,7 @@ const rsvpSlice = createSlice({
         state.error = action.payload || 'Failed to fetch RSVPs';
       })
 
-      // Create RSVP
+      // 🔐 Create RSVP (CSRF Protected)
       .addCase(createRSVP.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -111,7 +132,7 @@ const rsvpSlice = createSlice({
         state.error = action.payload || 'Failed to submit RSVP';
       })
 
-      // Update RSVP
+      // 🔐 Update RSVP (CSRF Protected)
       .addCase(updateRSVP.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -119,7 +140,9 @@ const rsvpSlice = createSlice({
       })
       .addCase(updateRSVP.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.rsvps.findIndex((rsvp) => rsvp.id === action.payload.id);
+        const index = state.rsvps.findIndex(
+          (rsvp) => rsvp.id === action.payload.id,
+        );
         if (index !== -1) {
           state.rsvps[index] = action.payload;
         }

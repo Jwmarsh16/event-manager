@@ -1,9 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
+// Helper function to fetch CSRF token before modifying requests
+const fetchCSRFToken = async () => {
+  await fetch('/csrf-token', { credentials: 'include' });
+};
+
 // Helper function for fetch requests with credentials and CSRF token
-const fetchWithCredentials = (url, options = {}) => {
-  const csrfToken = Cookies.get('csrf_access_token') || ''; // Gracefully handle missing CSRF tokens
+const fetchWithCredentials = async (url, options = {}) => {
+  if (['POST', 'PUT', 'DELETE'].includes(options.method)) {
+    await fetchCSRFToken(); // Ensure CSRF token is refreshed before modifying requests
+  }
+
+  const csrfToken = Cookies.get('csrf_access_token') || ''; // Retrieve the latest CSRF token
+  console.log('CSRF Token Sent:', csrfToken); // Debugging: Log the token being sent
+
   return fetch(url, {
     ...options,
     credentials: 'include', // Ensure cookies are sent with the request
@@ -15,200 +26,226 @@ const fetchWithCredentials = (url, options = {}) => {
   });
 };
 
-// Thunk to fetch all events
-export const fetchEvents = createAsyncThunk('events/fetchEvents', async (_, thunkAPI) => {
-  try {
-    console.log('Fetching all events...');
-    const response = await fetchWithCredentials('/api/events');
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error fetching events:', errorData.message);
-      throw new Error(errorData.message || 'Failed to fetch events');
+// 🔍 Fetch all events
+export const fetchEvents = createAsyncThunk(
+  'events/fetchEvents',
+  async (_, thunkAPI) => {
+    try {
+      console.log('Fetching all events...');
+      const response = await fetchWithCredentials('/api/events');
+      if (!response.ok) throw new Error('Failed to fetch events');
+      return await response.json();
+    } catch (error) {
+      console.error('Fetch events failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await response.json();
-  } catch (error) {
-    console.error('Fetch events failed:', error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to fetch events');
-  }
-});
+  },
+);
 
-// Thunk to search events by name
-export const searchEvents = createAsyncThunk('events/searchEvents', async (query, thunkAPI) => {
-  try {
-    console.log(`Searching events with query: "${query}"`);
-    const response = await fetchWithCredentials(`/api/events?q=${encodeURIComponent(query)}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error searching events:', errorData.message);
-      throw new Error(errorData.message || 'Failed to search events');
+// 🔍 Search events by name
+export const searchEvents = createAsyncThunk(
+  'events/searchEvents',
+  async (query, thunkAPI) => {
+    try {
+      console.log(`Searching events with query: "${query}"`);
+      const response = await fetchWithCredentials(
+        `/api/events?q=${encodeURIComponent(query)}`,
+      );
+      if (!response.ok) throw new Error('Failed to search events');
+      return await response.json();
+    } catch (error) {
+      console.error('Search events failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await response.json();
-  } catch (error) {
-    console.error('Search events failed:', error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to search events');
-  }
-});
+  },
+);
 
-// Thunk to fetch a specific event by ID
-export const fetchEventById = createAsyncThunk('events/fetchEventById', async (id, thunkAPI) => {
-  try {
-    console.log(`Fetching event by ID: ${id}`);
-    const response = await fetchWithCredentials(`/api/events/${id}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`Error fetching event by ID ${id}:`, errorData.message);
-      throw new Error(errorData.message || 'Failed to fetch event');
+// 🔍 Fetch a specific event by ID
+export const fetchEventById = createAsyncThunk(
+  'events/fetchEventById',
+  async (id, thunkAPI) => {
+    try {
+      console.log(`Fetching event by ID: ${id}`);
+      const response = await fetchWithCredentials(`/api/events/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch event');
+
+      const data = await response.json();
+      const currentUserId = thunkAPI.getState().auth.user?.id;
+      const isUserInvited = data.rsvps.some(
+        (rsvp) => rsvp.user_id === currentUserId,
+      );
+
+      return { ...data, isUserInvited };
+    } catch (error) {
+      console.error(`Fetch event by ID ${id} failed:`, error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    const data = await response.json();
+  },
+);
 
-    const currentUserId = thunkAPI.getState().auth.user?.id;
-    const isUserInvited = data.rsvps.some(rsvp => rsvp.user_id === currentUserId);
+// 🔐 Create a new event (CSRF Protected)
+export const createEvent = createAsyncThunk(
+  'events/createEvent',
+  async (eventData, thunkAPI) => {
+    try {
+      console.log('Creating event:', eventData);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
-    return { ...data, isUserInvited };
-  } catch (error) {
-    console.error(`Fetch event by ID ${id} failed:`, error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to fetch event');
-  }
-});
+      const response = await fetchWithCredentials('/api/events', {
+        method: 'POST',
+        body: JSON.stringify(eventData),
+      });
 
-// Thunk to create a new event
-export const createEvent = createAsyncThunk('events/createEvent', async (eventData, thunkAPI) => {
-  try {
-    console.log('Creating event:', eventData);
-    const response = await fetchWithCredentials('/api/events', {
-      method: 'POST',
-      body: JSON.stringify(eventData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error creating event:', errorData.message);
-      throw new Error(errorData.message || 'Failed to create event');
+      if (!response.ok) throw new Error('Failed to create event');
+
+      const createdEvent = await response.json();
+      const eventResponse = await fetchWithCredentials(
+        `/api/events/${createdEvent.event.id}`,
+      );
+
+      if (!eventResponse.ok)
+        throw new Error('Failed to fetch full event details');
+      return await eventResponse.json();
+    } catch (error) {
+      console.error('Create event failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    const createdEvent = await response.json();
+  },
+);
 
-    // Fetch the full event data using the newly created event's ID
-    const eventResponse = await fetchWithCredentials(`/api/events/${createdEvent.event.id}`);
-    if (!eventResponse.ok) {
-      const errorData = await eventResponse.json();
-      console.error('Error fetching full event details:', errorData.message);
-      throw new Error(errorData.message || 'Failed to fetch full event details');
+// 🔐 Update an event (CSRF Protected)
+export const updateEvent = createAsyncThunk(
+  'events/updateEvent',
+  async ({ id, eventData }, thunkAPI) => {
+    try {
+      console.log(`Updating event with ID: ${id}`);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
+
+      const response = await fetchWithCredentials(`/api/events/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(eventData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update event');
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Update event with ID ${id} failed:`, error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await eventResponse.json(); // Return the fully populated event
-  } catch (error) {
-    console.error('Create event failed:', error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to create event');
-  }
-});
+  },
+);
 
+// 🔐 Delete an Event (CSRF Protected)
+export const deleteEvent = createAsyncThunk(
+  'events/deleteEvent',
+  async (id, thunkAPI) => {
+    try {
+      console.log(`Deleting event with ID: ${id}`);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
-// Thunk to update an event
-export const updateEvent = createAsyncThunk('events/updateEvent', async ({ id, eventData }, thunkAPI) => {
-  try {
-    console.log(`Updating event with ID: ${id}`);
-    const response = await fetchWithCredentials(`/api/events/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(eventData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`Error updating event with ID ${id}:`, errorData.message);
-      throw new Error(errorData.message || 'Failed to update event');
+      const response = await fetchWithCredentials(`/api/events/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete event');
+
+      return { id }; // Return the event ID to remove it from the state
+    } catch (error) {
+      console.error(`Delete event with ID ${id} failed:`, error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    return await response.json();
-  } catch (error) {
-    console.error(`Update event with ID ${id} failed:`, error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to update event');
-  }
-});
+  },
+);
 
-// Thunk to delete an event
-export const deleteEvent = createAsyncThunk('events/deleteEvent', async (id, thunkAPI) => {
-  try {
-    console.log(`Deleting event with ID: ${id}`);
-    const response = await fetchWithCredentials(`/api/events/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`Error deleting event with ID ${id}:`, errorData.message);
-      throw new Error(errorData.message || 'Failed to delete event');
-    }
-    return { id }; // Return the event ID to remove it from the state
-  } catch (error) {
-    console.error(`Delete event with ID ${id} failed:`, error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to delete event');
-  }
-});
+// 🔐 RSVP to an Event (CSRF Protected)
+export const rsvpToEvent = createAsyncThunk(
+  'events/rsvpToEvent',
+  async ({ eventId, status }, thunkAPI) => {
+    try {
+      console.log(`RSVPing to event with ID: ${eventId} and status: ${status}`);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
 
-// Thunk to RSVP to an event
-export const rsvpToEvent = createAsyncThunk('events/rsvpToEvent', async ({ eventId, status }, thunkAPI) => {
-  try {
-    console.log(`RSVPing to event with ID: ${eventId} and status: ${status}`);
-    const response = await fetchWithCredentials('/api/rsvps', {
-      method: 'POST',
-      body: JSON.stringify({ event_id: eventId, status }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error RSVPing to event:', errorData.message);
-      throw new Error(errorData.message || 'Failed to RSVP');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('RSVP failed:', error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to RSVP');
-  }
-});
+      const response = await fetchWithCredentials('/api/rsvps', {
+        method: 'POST',
+        body: JSON.stringify({ event_id: eventId, status }),
+      });
 
-export const fetchEventInvitations = createAsyncThunk('events/fetchEventInvitations', async (_, thunkAPI) => {
-  try {
-    console.log('Fetching event invitations...');
-    const response = await fetchWithCredentials('/api/event_invitations');
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error fetching event invitations:', errorData.message);
-      throw new Error(errorData.message || 'Failed to fetch event invitations');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Fetch event invitations failed:', error.message);
-    return thunkAPI.rejectWithValue(error.message || 'Failed to fetch event invitations');
-  }
-});
+      if (!response.ok) throw new Error('Failed to RSVP');
 
-// Thunk to accept an event invitation
-export const acceptEventInvite = createAsyncThunk('events/acceptEventInvite', async (invitationId, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials(`/api/event_invitations/${invitationId}/accept`, {
-      method: 'PUT',
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to accept event invitation');
+      return await response.json();
+    } catch (error) {
+      console.error('RSVP failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    // Return the invitation ID to remove it from the store
-    return { id: invitationId };
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to accept event invitation');
-  }
-});
+  },
+);
 
-// Thunk to deny an event invitation
-export const denyEventInvite = createAsyncThunk('events/denyEventInvite', async (invitationId, thunkAPI) => {
-  try {
-    const response = await fetchWithCredentials(`/api/event_invitations/${invitationId}/deny`, {
-      method: 'PUT',
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to deny event invitation');
+// 🔍 Fetch Event Invitations (No CSRF Required, Read-Only)
+export const fetchEventInvitations = createAsyncThunk(
+  'events/fetchEventInvitations',
+  async (_, thunkAPI) => {
+    try {
+      console.log('Fetching event invitations...');
+      const response = await fetchWithCredentials('/api/event_invitations');
+      if (!response.ok) throw new Error('Failed to fetch event invitations');
+      return await response.json();
+    } catch (error) {
+      console.error('Fetch event invitations failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
     }
-    // Return the invitation ID to remove it from the store
-    return { id: invitationId };
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.message || 'Failed to deny event invitation');
-  }
-});
+  },
+);
+
+// 🔐 Accept an Event Invitation (CSRF Protected)
+export const acceptEventInvite = createAsyncThunk(
+  'events/acceptEventInvite',
+  async (invitationId, thunkAPI) => {
+    try {
+      console.log(`Accepting event invitation with ID: ${invitationId}`);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
+
+      const response = await fetchWithCredentials(
+        `/api/event_invitations/${invitationId}/accept`,
+        {
+          method: 'PUT',
+        },
+      );
+
+      if (!response.ok) throw new Error('Failed to accept event invitation');
+
+      return { id: invitationId }; // Return the invitation ID to remove it from the store
+    } catch (error) {
+      console.error('Accept event invitation failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
+
+// 🔐 Deny an Event Invitation (CSRF Protected)
+export const denyEventInvite = createAsyncThunk(
+  'events/denyEventInvite',
+  async (invitationId, thunkAPI) => {
+    try {
+      console.log(`Denying event invitation with ID: ${invitationId}`);
+      await fetchCSRFToken(); // Ensure CSRF token is refreshed
+
+      const response = await fetchWithCredentials(
+        `/api/event_invitations/${invitationId}/deny`,
+        {
+          method: 'PUT',
+        },
+      );
+
+      if (!response.ok) throw new Error('Failed to deny event invitation');
+
+      return { id: invitationId }; // Return the invitation ID to remove it from the store
+    } catch (error) {
+      console.error('Deny event invitation failed:', error.message);
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
 
 // Event slice
 const eventSlice = createSlice({
@@ -314,7 +351,9 @@ const eventSlice = createSlice({
       })
       .addCase(updateEvent.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.events.findIndex(event => event.id === action.payload.id);
+        const index = state.events.findIndex(
+          (event) => event.id === action.payload.id,
+        );
         if (index !== -1) {
           state.events[index] = action.payload;
         }
@@ -334,7 +373,9 @@ const eventSlice = createSlice({
       })
       .addCase(deleteEvent.fulfilled, (state, action) => {
         state.loading = false;
-        state.events = state.events.filter(event => event.id !== action.payload.id);
+        state.events = state.events.filter(
+          (event) => event.id !== action.payload.id,
+        );
         state.operation = null;
       })
       .addCase(deleteEvent.rejected, (state, action) => {
@@ -386,7 +427,9 @@ const eventSlice = createSlice({
       })
       .addCase(acceptEventInvite.fulfilled, (state, action) => {
         state.loading = false;
-        state.invitations = state.invitations.filter((invite) => invite.id !== action.payload.id); // Remove accepted invite
+        state.invitations = state.invitations.filter(
+          (invite) => invite.id !== action.payload.id,
+        ); // Remove accepted invite
         state.operation = null;
       })
       .addCase(acceptEventInvite.rejected, (state, action) => {
@@ -403,7 +446,9 @@ const eventSlice = createSlice({
       })
       .addCase(denyEventInvite.fulfilled, (state, action) => {
         state.loading = false;
-        state.invitations = state.invitations.filter((invite) => invite.id !== action.payload.id); // Remove denied invite
+        state.invitations = state.invitations.filter(
+          (invite) => invite.id !== action.payload.id,
+        ); // Remove denied invite
         state.operation = null;
       })
       .addCase(denyEventInvite.rejected, (state, action) => {
