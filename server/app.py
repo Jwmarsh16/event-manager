@@ -44,10 +44,12 @@ def validate_csrf_token():
     cookie_csrf_token = request.cookies.get("csrf_access_token")
     if not request_csrf_token or request_csrf_token != cookie_csrf_token:
         return {"message": "Invalid CSRF token"}, 403
-    try:
-        validate_csrf(request_csrf_token)
-    except Exception:
-        return {"message": "Invalid CSRF token"}, 403
+    # Remove the following block if not using session-based validation:
+    # try:
+    #     validate_csrf(request_csrf_token)
+    # except Exception:
+    #     return {"message": "Invalid CSRF token"}, 403
+
 
 
 
