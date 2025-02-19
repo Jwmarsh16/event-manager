@@ -252,7 +252,11 @@ class EventList(Resource):
         db.session.add(new_event)
         db.session.commit()
 
-        return {"message": "Event created successfully"}, 201
+        serialized_event = new_event.to_dict(
+            rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event')
+        )
+        return {"message": "Event created successfully", "event": serialized_event}, 201
+
 
 # 🔍 Event Detail Resource
 class EventDetail(Resource):
