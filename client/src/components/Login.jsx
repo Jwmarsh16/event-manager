@@ -9,7 +9,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state) => state.auth); // Track loading & errors
+  const { loading, error } = useSelector((state) => state.auth);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -17,8 +17,7 @@ function Login() {
     const response = await dispatch(login({ email, password }));
 
     if (response.meta.requestStatus === 'fulfilled') {
-      // No need to fetch a custom CSRF token now; JWT's built-in mechanism handles it.
-      await dispatch(checkAuthStatus()); // Ensure UI updates before redirecting
+      await dispatch(checkAuthStatus());
       navigate('/');
     } else {
       console.error(
@@ -31,7 +30,11 @@ function Login() {
   return (
     <div className="login-container">
       <div className="login-form-wrapper">
+        {/* Title */}
+        <h1 className="app-title">Event Manager</h1>
+        {/* Login Title */}
         <h2 className="login-title">Login</h2>
+
         <form className="login-form" onSubmit={handleLogin}>
           <input
             type="email"
@@ -59,6 +62,11 @@ function Login() {
           <Link to="/register" className="login-link">
             Register here
           </Link>
+        </p>
+        {/* Demo Note */}
+        <p className="login-demo-note">
+          Note: This application is a demo project showcasing my technical
+          capabilities. All data is fake and seeded using Faker.
         </p>
       </div>
     </div>
