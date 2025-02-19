@@ -47,6 +47,10 @@ app.config['JWT_CSRF_IN_COOKIES'] = True  # Ensures CSRF token is stored and val
 app.config['JWT_CSRF_CHECK_FORM'] = True  # Ensure forms are checked for CSRF tokens in production
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')  # Secure JWT key from environment
 
+app.config['JWT_ACCESS_CSRF_COOKIE_NAME'] = 'jwt_csrf_access'
+app.config['JWT_REFRESH_CSRF_COOKIE_NAME'] = 'jwt_csrf_refresh'
+
+
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Access tokens expire in 1 hour
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)  # Refresh tokens expire in 7 days
 
