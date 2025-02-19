@@ -1,11 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import Cookies from 'js-cookie';
 
-// Helper function to fetch CSRF token from the backend endpoint
+// Helper function to retrieve the JWT CSRF token from its cookie
 const fetchCSRFToken = async () => {
-  const response = await fetch('/api/csrf-token', { credentials: 'include' });
-  const data = await response.json();
-  return data.csrf_token;
+  // JWT's built-in CSRF cookie is now named 'jwt_csrf_access'
+  return Cookies.get('jwt_csrf_access');
 };
 
 // Helper function for fetch requests with credentials and CSRF token
@@ -14,7 +13,7 @@ const fetchWithCredentials = async (url, options = {}) => {
 
   let csrfToken = '';
 
-  // Fetch CSRF token before modifying requests
+  // For modifying requests, get the JWT CSRF token from the cookie
   if (isModifyingRequest) {
     csrfToken = await fetchCSRFToken();
   }

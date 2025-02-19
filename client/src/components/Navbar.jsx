@@ -19,10 +19,9 @@ function Navbar() {
   const handleLogout = async () => {
     try {
       const result = await dispatch(logout());
-
       if (result.meta.requestStatus === 'fulfilled') {
         dispatch(resetAuthState());
-        await fetch('/api/csrf-token', { credentials: 'include' }); // Fetch a new CSRF token after logout
+        // No need to fetch a new CSRF token—JWT's built-in CSRF protection handles that.
         navigate('/login');
         setMenuOpen(false);
       } else {

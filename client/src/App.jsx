@@ -21,23 +21,8 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    async function initializeApp() {
-      try {
-        const csrfResponse = await fetch('/api/csrf-token', {
-          credentials: 'include',
-        });
-
-        if (!csrfResponse.ok) {
-          throw new Error('Failed to fetch CSRF token');
-        }
-
-        dispatch(checkAuthStatus()); // Ensure authentication check runs on app load
-      } catch (error) {
-        console.error('Error initializing app:', error);
-      }
-    }
-
-    initializeApp();
+    // Simply dispatch the auth status check on app load.
+    dispatch(checkAuthStatus());
   }, [dispatch]);
 
   return (

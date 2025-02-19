@@ -17,7 +17,7 @@ function Login() {
     const response = await dispatch(login({ email, password }));
 
     if (response.meta.requestStatus === 'fulfilled') {
-      await fetch('/api/csrf-token', { credentials: 'include' }); // Ensure new CSRF token is set
+      // No need to fetch a custom CSRF token now; JWT's built-in mechanism handles it.
       await dispatch(checkAuthStatus()); // Ensure UI updates before redirecting
       navigate('/');
     } else {

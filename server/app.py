@@ -1,57 +1,56 @@
 from flask import request, make_response, jsonify, redirect, render_template
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, set_access_cookies, unset_jwt_cookies, create_refresh_token, set_refresh_cookies
-from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf  # Add CSRF imports
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    jwt_required,
+    get_jwt_identity,
+    set_access_cookies,
+    unset_jwt_cookies,
+    create_refresh_token,
+    set_refresh_cookies
+)
+#from flask_wtf.csrf import CSRFProtect, generate_csrf, validate_csrf  # No longer needed
 from flask_restful import Resource
 from models import User, Event, Group, RSVP, Comment, GroupInvitation, EventInvitation
 from config import app, db, api
 from datetime import datetime
 import json
 
-
 # Initialize JWT Manager
 jwt = JWTManager(app)
 
-
-@app.after_request
-def set_csrf_cookie(response):
-    if not request.cookies.get("csrf_access_token"):
-        csrf_token = generate_csrf()
-        response.set_cookie(
-            "csrf_access_token",
-            csrf_token,
-            httponly=True,
-            secure=True,
-            samesite="Strict",
-            max_age=3600
-        )
-    return response
-
-
-
-
-@app.route('/api/csrf-token')
-def get_csrf_token():
-    token = request.cookies.get("csrf_access_token")
-    if not token:
-        token = generate_csrf()
-    return jsonify({"csrf_token": token})
-
-
-
-
-def validate_csrf_token():
-    request_csrf_token = request.headers.get('X-CSRF-TOKEN')
-    cookie_csrf_token = request.cookies.get("csrf_access_token")
-    if not request_csrf_token or request_csrf_token != cookie_csrf_token:
-        return {"message": "Invalid CSRF token"}, 403
-    # Remove the following block if not using session-based validation:
-    # try:
-    #     validate_csrf(request_csrf_token)
-    # except Exception:
-    #     return {"message": "Invalid CSRF token"}, 403
-
-
-
+# --- Custom CSRF code removed ---
+# @app.after_request
+# def set_csrf_cookie(response):
+#     if not request.cookies.get("csrf_access_token"):
+#         csrf_token = generate_csrf()
+#         response.set_cookie(
+#             "csrf_access_token",
+#             csrf_token,
+#             httponly=True,
+#             secure=True,
+#             samesite="Strict",
+#             max_age=3600
+#         )
+#     return response
+#
+# @app.route('/api/csrf-token')
+# def get_csrf_token():
+#     token = request.cookies.get("csrf_access_token")
+#     if not token:
+#         token = generate_csrf()
+#     return jsonify({"csrf_token": token})
+#
+# def validate_csrf_token():
+#     request_csrf_token = request.headers.get('X-CSRF-TOKEN')
+#     cookie_csrf_token = request.cookies.get("csrf_access_token")
+#     if not request_csrf_token or request_csrf_token != cookie_csrf_token:
+#         return {"message": "Invalid CSRF token"}, 403
+#     try:
+#         validate_csrf(request_csrf_token)
+#     except Exception:
+#         return {"message": "Invalid CSRF token"}, 403
+# --- End of custom CSRF code ---
 
 def unset_jwt():
     """
@@ -65,13 +64,12 @@ def assign_access_refresh_tokens(user_id, url):
     """
     Generate access and refresh tokens, set them as cookies, and redirect to a specified URL.
     """
-    access_token = create_access_token(identity=str(user_id))  # Ensure identity is a string
-    refresh_token = create_refresh_token(identity=str(user_id))  # Ensure identity is a string
+    access_token = create_access_token(identity=str(user_id))
+    refresh_token = create_refresh_token(identity=str(user_id))
     resp = make_response(redirect(url, 302))
     set_access_cookies(resp, access_token)
     set_refresh_cookies(resp, refresh_token)
     return resp
-
 
 @app.route('/')
 def serve_index():
@@ -80,14 +78,9 @@ def serve_index():
     """
     return app.send_static_file('index.html')
 
-
-# 🔐 Register Resource (CSRF Protected)
+# 🔐 Register Resource (CSRF Protected via JWT CSRF)
 class Register(Resource):
     def post(self):
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             data = request.get_json()
 
@@ -115,14 +108,9 @@ class Register(Resource):
             app.logger.error(f"Unexpected error: {e}")
             return {"message": "An internal server error occurred"}, 500
 
-
-# 🔐 Login Resource (CSRF Protected)
+# 🔐 Login Resource (CSRF Protected via JWT CSRF)
 class Login(Resource):
     def post(self):
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             data = request.get_json()
 
@@ -149,13 +137,11 @@ class Login(Resource):
             app.logger.error(f"Unexpected error during login: {e}")
             return {"message": "An internal server error occurred"}, 500
 
-
 # 🔐 Logout Resource
 class Logout(Resource):
     @jwt_required()
     def post(self):
         return unset_jwt()
-
 
 # 🔍 User List (No CSRF Required, Read-Only)
 class UserList(Resource):
@@ -173,7 +159,6 @@ class UserList(Resource):
             for user in users
         ]
         return serialized_users, 200
-
 
 # 🔍 User Profile (No CSRF Required, Read-Only)
 class UserProfile(Resource):
@@ -209,17 +194,11 @@ class UserProfile(Resource):
             ]
         }, 200
 
-
-# 🔐 Delete Profile (CSRF Protected)
+# 🔐 Delete Profile (CSRF Protected via JWT CSRF)
 class DeleteProfile(Resource):
     @jwt_required()
     def delete(self):
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         current_user_id = int(get_jwt_identity())
-
         user = User.query.get_or_404(current_user_id)
         try:
             db.session.delete(user)
@@ -231,13 +210,11 @@ class DeleteProfile(Resource):
         unset_jwt_cookies(response)
         return response
 
-
-# 🔍 Event List (GET) and Create Event (POST, CSRF Protected)
+# 🔍 Event List (GET) and Create Event (POST, CSRF Protected via JWT CSRF)
 class EventList(Resource):
     def get(self):
         limit = request.args.get('limit', 30, type=int)
         query = request.args.get('q', '')
-
         try:
             if query:
                 events = Event.query.filter(Event.name.ilike(f"%{query}%")).limit(limit).all()
@@ -254,10 +231,6 @@ class EventList(Resource):
 
     @jwt_required()
     def post(self):
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         current_user_id = int(get_jwt_identity())
         data = request.get_json()
 
@@ -281,15 +254,10 @@ class EventList(Resource):
 
         return {"message": "Event created successfully"}, 201
 
-
-
 # 🔍 Event Detail Resource
 class EventDetail(Resource):
     @jwt_required()
     def get(self, event_id):
-        """
-        Fetch event details.
-        """
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -312,13 +280,6 @@ class EventDetail(Resource):
 
     @jwt_required()
     def put(self, event_id):
-        """
-        Update event details (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -326,7 +287,6 @@ class EventDetail(Resource):
 
         event = Event.query.get_or_404(event_id)
 
-        # Ensure only the event owner can edit the event
         if event.user_id != current_user_id:
             return {"message": "You do not have permission to update this event"}, 403
 
@@ -346,13 +306,6 @@ class EventDetail(Resource):
 
     @jwt_required()
     def delete(self, event_id):
-        """
-        Delete an event (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -360,7 +313,6 @@ class EventDetail(Resource):
 
         event = Event.query.get_or_404(event_id)
 
-        # Ensure only the event owner can delete it
         if event.user_id != current_user_id:
             return {"message": "You do not have permission to delete this event"}, 403
 
@@ -368,18 +320,10 @@ class EventDetail(Resource):
         db.session.commit()
         return {"message": "Event deleted successfully"}, 200
 
-
-# 🔐 Event Invitation Resource (CSRF Protected)
+# 🔐 Event Invitation Resource (CSRF Protected via JWT CSRF)
 class EventInvite(Resource):
     @jwt_required()
     def post(self, event_id):
-        """
-        Invite a user to an event (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         current_user_id = int(get_jwt_identity())
         data = request.get_json()
 
@@ -388,13 +332,11 @@ class EventInvite(Resource):
 
         event = Event.query.get_or_404(event_id)
 
-        # Ensure only the event owner can invite users
         if event.user_id != current_user_id:
             return {"message": "You do not have permission to invite users to this event"}, 403
 
         invited_user = User.query.get_or_404(data['invited_user_id'])
 
-        # Check if the user is already invited
         existing_invitation = EventInvitation.query.filter_by(
             event_id=event.id,
             invitee_id=invited_user.id
@@ -402,7 +344,6 @@ class EventInvite(Resource):
         if existing_invitation:
             return {"message": "User is already invited"}, 400
 
-        # Create a new event invitation
         new_invitation = EventInvitation(
             event_id=event.id,
             inviter_id=current_user_id,
@@ -412,7 +353,6 @@ class EventInvite(Resource):
         db.session.add(new_invitation)
         db.session.commit()
 
-        # Serialize event and invited user
         event_data = event.to_dict(rules=('-user.events', '-rsvps.event', '-comments.event', '-invitations.event'))
         invited_user_data = invited_user.to_dict(rules=('-events', '-groups', '-rsvps', '-sent_event_invitations', '-received_event_invitations'))
 
@@ -426,14 +366,10 @@ class EventInvite(Resource):
             }
         }, 201
 
-
-# 🔍 Event Invitations List (CSRF Protected for Deleting)
+# 🔍 Event Invitations List (CSRF Protected for Deleting) / Read-Only for Getting
 class EventInvitations(Resource):
     @jwt_required()
     def get(self):
-        """
-        Get pending event invitations for the current user.
-        """
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -441,7 +377,6 @@ class EventInvitations(Resource):
 
         try:
             invitations = EventInvitation.query.filter_by(invitee_id=current_user_id, status='Pending').all()
-
             serialized_invitations = []
             for invite in invitations:
                 event_data = invite.event.to_dict(rules=('-invitations', '-rsvps.event', '-comments.event')) if invite.event else None
@@ -455,59 +390,39 @@ class EventInvitations(Resource):
                 })
 
             return serialized_invitations, 200
-
         except Exception as e:
             print(f"Error fetching event invitations: {e}")
             return {"message": "Failed to fetch event invitations", "details": str(e)}, 500
 
     @jwt_required()
     def delete(self):
-        """
-        Cancel an event invitation (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
             data = request.get_json()
-            invite_id = data.get('id')
 
-            if not invite_id:
+            if "id" not in data:
                 return {"message": "Invitation ID is required"}, 400
 
-            # Ensure the inviter is canceling the invitation
-            invitation = EventInvitation.query.filter_by(id=invite_id, inviter_id=current_user_id).first()
+            invitation = EventInvitation.query.filter_by(id=data['id'], inviter_id=current_user_id).first()
+
             if not invitation:
                 return {"message": "Invitation not found or unauthorized"}, 404
 
             db.session.delete(invitation)
             db.session.commit()
 
-            return {"message": "Invitation canceled successfully", "id": invite_id}, 200
-
+            return {"message": "Invitation canceled successfully", "id": invitation.id}, 200
         except Exception as e:
             print(f"Error canceling event invitation: {e}")
             return {"message": "Failed to cancel event invitation", "details": str(e)}, 500
-
-
 
 # 🔍 Fetch All Invitations for a Specific Event (No CSRF Required, Read-Only)
 class EventInvitationsForEvent(Resource):
     @jwt_required()
     def get(self, event_id):
-        """
-        Retrieve all invitations for a specific event.
-        """
         try:
-            # Ensure the event exists
             event = Event.query.get_or_404(event_id)
-
-            # Fetch all invitations for the event
             invitations = EventInvitation.query.filter_by(event_id=event_id).all()
-
-            # Serialize the invitations with invitee details and status
             serialized_invitations = [
                 {
                     "id": invite.id,
@@ -519,21 +434,15 @@ class EventInvitationsForEvent(Resource):
                 }
                 for invite in invitations
             ]
-
             return serialized_invitations, 200
-
         except Exception as e:
             print(f"Error fetching invitations for event {event_id}: {e}")
             return {"message": "Failed to fetch invitations", "details": str(e)}, 500
-
 
 # 🔍 Fetch Invitation By Criteria (No CSRF Required, Read-Only)
 class EventInvitationByCriteria(Resource):
     @jwt_required()
     def get(self):
-        """
-        Retrieve a specific event invitation by event_id and invitee_id.
-        """
         try:
             event_id = request.args.get('event_id', type=int)
             invitee_id = request.args.get('invitee_id', type=int)
@@ -550,27 +459,17 @@ class EventInvitationByCriteria(Resource):
         except Exception as e:
             return {"message": "Failed to fetch invitation", "details": str(e)}, 500
 
-
-# 🔐 Deny Event Invitation (CSRF Protected)
+# 🔐 Deny Event Invitation (CSRF Protected via JWT CSRF)
 class DenyEventInvitation(Resource):
     @jwt_required()
     def put(self, invitation_id):
-        """
-        Allows an invitee to deny an event invitation (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
             invitation = EventInvitation.query.get_or_404(invitation_id)
 
-            # Ensure only the invitee can deny the invitation
             if invitation.invitee_id != current_user_id:
                 return {"message": "You do not have permission to deny this invitation"}, 403
 
-            # Delete the invitation instead of just updating its status
             db.session.delete(invitation)
             db.session.commit()
 
@@ -578,27 +477,17 @@ class DenyEventInvitation(Resource):
         except Exception as e:
             return {"message": f"Error: {str(e)}"}, 500
 
-
-# 🔐 Accept Event Invitation (CSRF Protected)
+# 🔐 Accept Event Invitation (CSRF Protected via JWT CSRF)
 class AcceptEventInvitation(Resource):
     @jwt_required()
     def put(self, invitation_id):
-        """
-        Allows an invitee to accept an event invitation (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
             invitation = EventInvitation.query.get_or_404(invitation_id)
 
-            # Ensure only the invitee can accept the invitation
             if invitation.invitee_id != current_user_id:
                 return {"message": "You do not have permission to accept this invitation"}, 403
 
-            # Update invitation status
             invitation.status = 'Accepted'
             db.session.commit()
             return {"id": invitation_id}, 200
@@ -626,12 +515,8 @@ class GroupList(Resource):
     @jwt_required()
     def post(self):
         """
-        Create a new group (CSRF Protected).
+        Create a new group (CSRF Protected via JWT CSRF).
         """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         current_user_id = int(get_jwt_identity())
         data = request.get_json()
 
@@ -658,8 +543,6 @@ class GroupList(Resource):
         }, 201
 
 
-
-
 # 🔍 Fetch Group Details (No CSRF Required, Read-Only) / 🔐 Delete Group (CSRF Protected)
 class GroupDetail(Resource):
     def get(self, group_id):
@@ -684,12 +567,8 @@ class GroupDetail(Resource):
     @jwt_required()
     def delete(self, group_id):
         """
-        Delete a group (CSRF Protected).
+        Delete a group (CSRF Protected via JWT CSRF).
         """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -706,17 +585,13 @@ class GroupDetail(Resource):
         return {"message": "Group deleted successfully"}, 200
 
 
-# 🔐 Invite User to Group (CSRF Protected)
+# 🔐 Invite User to Group (CSRF Protected via JWT CSRF)
 class GroupInvite(Resource):
     @jwt_required()
     def post(self, group_id):
         """
-        Invite a user to a group (CSRF Protected).
+        Invite a user to a group (CSRF Protected via JWT CSRF).
         """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -760,7 +635,7 @@ class GroupInvite(Resource):
         return {"message": "Group invitation sent successfully", "invitation": invitation_data}, 201
 
 
-# 🔍 Fetch Group Invitations (No CSRF Required, Read-Only) / 🔐 Cancel Group Invitation (CSRF Protected)
+# 🔍 Fetch Group Invitations (No CSRF Required, Read-Only) / 🔐 Cancel Group Invitation (CSRF Protected via JWT CSRF)
 class GroupInvitations(Resource):
     @jwt_required()
     def get(self):
@@ -784,12 +659,8 @@ class GroupInvitations(Resource):
     @jwt_required()
     def delete(self):
         """
-        Cancel a group invitation (CSRF Protected).
+        Cancel a group invitation (CSRF Protected via JWT CSRF).
         """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
             data = request.get_json()
@@ -805,14 +676,12 @@ class GroupInvitations(Resource):
             if not invitation:
                 return {"message": "Invitation not found or unauthorized"}, 404
 
-            # Delete the invitation
             db.session.delete(invitation)
             db.session.commit()
 
             return {"message": "Invitation canceled successfully", "id": invitation.id}, 200
         except Exception as e:
             return {"message": f"Error: {str(e)}"}, 500
-
 
 
 # 🔍 Fetch Group Invitations (No CSRF Required, Read-Only)
@@ -849,17 +718,13 @@ class GroupInvitationsForGroup(Resource):
             return {"message": "Failed to fetch invitations", "details": str(e)}, 500
 
 
-# 🔐 Deny Group Invitation (CSRF Protected)
+# 🔐 Deny Group Invitation (CSRF Protected via JWT CSRF)
 class DenyGroupInvitation(Resource):
     @jwt_required()
     def put(self, invitation_id):
         """
-        Allows an invitee to deny a group invitation (CSRF Protected).
+        Allows an invitee to deny a group invitation (CSRF Protected via JWT CSRF).
         """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
             invitation = GroupInvitation.query.get_or_404(invitation_id)
@@ -877,17 +742,13 @@ class DenyGroupInvitation(Resource):
             return {"message": f"Error: {str(e)}"}, 500
 
 
-# 🔐 Accept Group Invitation (CSRF Protected)
+# 🔐 Accept Group Invitation (CSRF Protected via JWT CSRF)
 class AcceptGroupInvitation(Resource):
     @jwt_required()
     def put(self, invitation_id):
         """
-        Allows an invitee to accept a group invitation (CSRF Protected).
+        Allows an invitee to accept a group invitation (CSRF Protected via JWT CSRF).
         """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
             invitation = GroupInvitation.query.get_or_404(invitation_id)
@@ -908,17 +769,11 @@ class AcceptGroupInvitation(Resource):
             return {"message": f"Error: {str(e)}"}, 500
 
 
-# 🔐 RSVP to Event (CSRF Protected)
+
+# 🔐 RSVP to Event (CSRF Protected via JWT CSRF)
 class RSVPList(Resource):
     @jwt_required()
     def post(self):
-        """
-        Allows a user to RSVP to an event (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -930,7 +785,6 @@ class RSVPList(Resource):
 
         event = Event.query.get_or_404(data['event_id'])
 
-        # Ensure the user has been invited and accepted the invitation
         invitation = EventInvitation.query.filter_by(
             event_id=event.id, invitee_id=current_user_id, status="Accepted"
         ).first()
@@ -947,14 +801,10 @@ class RSVPList(Resource):
         db.session.commit()
         return {"message": "RSVP updated successfully", "rsvp": existing_rsvp.to_dict() if existing_rsvp else new_rsvp.to_dict()}, 201
 
-
 # 🔍 Fetch RSVPs for an Event (No CSRF Required, Read-Only)
 class EventRSVPs(Resource):
     @jwt_required()
     def get(self, event_id):
-        """
-        Retrieve RSVPs for a specific event.
-        """
         try:
             current_user_id = int(get_jwt_identity())
         except ValueError:
@@ -962,7 +812,6 @@ class EventRSVPs(Resource):
 
         event = Event.query.get_or_404(event_id)
 
-        # Ensure only the event owner or an invited user can view RSVPs
         if event.user_id != current_user_id and not EventInvitation.query.filter_by(
             event_id=event.id, invitee_id=current_user_id, status="Accepted"
         ).first():
@@ -974,20 +823,10 @@ class EventRSVPs(Resource):
         ]
         return serialized_rsvps, 200
 
-
-
-
-# 🔐 Add a Comment to an Event (CSRF Protected)
+# 🔐 Add a Comment to an Event (CSRF Protected via JWT CSRF)
 class CommentList(Resource):
     @jwt_required()
     def post(self, event_id):
-        """
-        Allows a user to add a comment to an event (CSRF Protected).
-        """
-        csrf_error = validate_csrf_token()
-        if csrf_error:
-            return csrf_error
-
         current_user_id = int(get_jwt_identity())
         data = request.get_json()
 
@@ -1002,20 +841,13 @@ class CommentList(Resource):
         db.session.add(new_comment)
         db.session.commit()
 
-        # Serialize comment data with restricted fields to avoid recursion
         comment_data = new_comment.to_dict(rules=('-user.comments', '-event.comments'))
         return {"message": "Comment added successfully", "comment": comment_data}, 201
-
 
 # 🔍 Fetch All Comments for an Event (No CSRF Required, Read-Only)
 class EventComments(Resource):
     def get(self, event_id):
-        """
-        Retrieve all comments for a specific event.
-        """
         comments = Comment.query.filter_by(event_id=event_id).all()
-
-        # Serialize comment data with restricted fields to avoid recursion
         serialized_comments = [
             comment.to_dict(rules=('-user.comments', '-event.comments')) for comment in comments
         ]
